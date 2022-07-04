@@ -21,19 +21,19 @@ const App = (render: any, image: HTMLImage, stage: Transform) => {
   let mavi = new Mavi($update)
 
 
-  /*
   let $colors = Template.clone
   $colors._set_parent(stage)
 
   $effect(() => {
+    console.log(mavi.$news)
+    /*
     mavi.$news.forEach(_ => 
                        Anim({
                         _,
                         parent: $colors
                        }))
+                      */
   })
-
- */
 
 
   let bg = Anim({

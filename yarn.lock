@@ -306,11 +306,6 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@maverick-js/observables@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@maverick-js/observables/-/observables-1.0.1.tgz#17a5fddeada5f16aaa18ac5ac4215c7dc854a76b"
-  integrity sha512-kPoL8KqyECDaPcdDIgeWniSeZ/XXocG2PBlg9CNS4xvWlpgeaStAfmXtjzeVS3GbLfgPRNLHaLuiZ1th0prAoQ==
-
 "@rollup/plugin-babel@^5.3.1":
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-babel/-/plugin-babel-5.3.1.tgz#04bc0608f4aa4b2e4b1aebf284344d0f68fda283"

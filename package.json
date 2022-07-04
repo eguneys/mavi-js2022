@@ -23,7 +23,5 @@
     "rollup-plugin-serve": "^1.1.0",
     "rollup-plugin-terser": "^7.0.2"
   },
-  "dependencies": {
-    "@maverick-js/observables": "^1.0.1"
-  }
+  "dependencies": {}
 }

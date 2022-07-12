@@ -1,10 +1,12 @@
 import sprites_png from '../assets/sprites.png'
 import Canvas from './canvas'
 import P from './play'
-import { Rectangle, Transform } from './math'
+import { Vec2, Rectangle, Transform } from './math'
 
 import { vSource, fSource } from './shaders'
 import { color_rgb } from './util'
+
+import { set_stage } from './stage'
 
 
 
@@ -68,58 +70,67 @@ export default function app(element: HTMLElement) {
       attributeBuffer,
       vao } = play.glProgram(vSource, fSource, nb)
 
-      let _indexBuffer = new Uint16Array(nb * 3)
-      let _attributeBuffer = new Float32Array(nb * 6)
+    let _indexBuffer = new Uint16Array(nb * 3)
+    let _attributeBuffer = new Float32Array(nb * 6)
 
-      let render = (dt: number, dt0: number) => {
+    let render = (dt: number, dt0: number) => {
 
-        play.glClear()
+      play.glClear()
 
-        play.glUse(program, uniformData)
+      play.glUse(program, uniformData)
 
 
-        let aIndex = 0,
-          iIndex = 0,
-          iNb = 0
+      let aIndex = 0,
+        iIndex = 0,
+        iNb = 0
 
-        for (let i = 0; i < stage._flat.length; i++) {
-          let el = stage._flat[i]
-          let { world, tint } = el
+      for (let i = 0; i < stage._flat.length; i++) {
+        let el = stage._flat[i]
+        let { world, tint } = el
 
-          let {vertexData, indices } = Rectangle.unit.transform(world)
+        let { area, vertexData, indices } = Rectangle.unit.transform(world)
 
-          let tintData = color_rgb(tint)
+        if (area < 10) { continue }
 
-          for (let k = 0; k < vertexData.length; k+= 2) {
-            _attributeBuffer[aIndex++] = vertexData[k]
-            _attributeBuffer[aIndex++] = vertexData[k+1]
+        let tintData = color_rgb(tint)
 
-            _attributeBuffer[aIndex++] = 0//fsUv[k]
-            _attributeBuffer[aIndex++] = 0//fsUv[k+1]
+        for (let k = 0; k < vertexData.length; k+= 2) {
+          _attributeBuffer[aIndex++] = vertexData[k]
+          _attributeBuffer[aIndex++] = vertexData[k+1]
 
-            _attributeBuffer[aIndex++] = tintData[0]
-            _attributeBuffer[aIndex++] = tintData[1]
-            _attributeBuffer[aIndex++] = tintData[2]
-          }
+          _attributeBuffer[aIndex++] = 9//fsUv[k]
+          _attributeBuffer[aIndex++] = 9//fsUv[k+1]
 
-          for (let k = 0; k < indices.length; k++) {
-            _indexBuffer[iIndex++] = iNb * 4 + indices[k]
-          }
-
-          iNb++;
+          _attributeBuffer[aIndex++] = tintData[0]
+          _attributeBuffer[aIndex++] = tintData[1]
+          _attributeBuffer[aIndex++] = tintData[2]
         }
 
+        for (let k = 0; k < indices.length; k++) {
+          _indexBuffer[iIndex++] = iNb * 4 + indices[k]
+        }
 
-        play.glAttribUpdate(attributeBuffer, _attributeBuffer)
-        play.glIndexUpdate(indexBuffer, _indexBuffer)
-
-        play.glDraw(iNb * 6, vao)
+        iNb++;
       }
 
+      //console.log(_attributeBuffer.slice(0, 100))
+      play.glAttribUpdate(attributeBuffer, _attributeBuffer)
+      play.glIndexUpdate(indexBuffer, _indexBuffer)
 
-      loop((dt: number, dt0: number) => {
-        render(dt, dt0)
-      })
+      play.glDraw(iNb * 6, vao)
+    }
+
+
+    let ss = set_stage(stage)
+
+
+    loop((dt: number, dt0: number) => {
+
+      ss.update(dt, dt0)
+
+      stage._update_world()
+      render(dt, dt0)
+    })
 
   })
 }

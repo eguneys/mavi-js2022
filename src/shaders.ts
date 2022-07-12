@@ -20,9 +20,12 @@ in vec3 vTint;
 out vec4 outColor;
 uniform sampler2D uSampler;
 void main() {
-  //outColor = vec4(1.0, 1.0, 0.0, 1.0);
+  /*
   vec4 color = texture(uSampler, vTextureCoord);
   color.rgb *= vTint;
+  color = vec4(1.0, 0.0, 0.0, 1.0);
   outColor = vec4(color.rgb * color.a, color.a);
+  */
+  outColor = vec4(1.0, 1.0, 0.0, 1.0);
 }
 `

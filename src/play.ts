@@ -74,8 +74,6 @@ export default class Play {
     gl.enableVertexAttribArray(a3loc)
     gl.vertexAttribPointer(a3loc, 3, gl.FLOAT, false, stride, 2*4 + 2*4)
 
-
-
     gl.bindVertexArray(null)
 
 
@@ -126,7 +124,6 @@ export default class Play {
     let { gl } = this
 
     gl.useProgram(program)
-
 
     gl.uniformMatrix3fv(uniformData['projectionMatrix'].location, false, this.projectionMatrix.array_t)
   }

@@ -235,6 +235,10 @@ export class Vec2 {
     return Math.atan2(this.y, this.x)
   }
 
+  angle_between(v: Vec2) {
+    return this.angle - v.angle
+  }
+
   constructor(readonly x: number, 
     readonly y: number) { }
 
@@ -358,8 +362,8 @@ export class Rectangle {
 
   get x() { return this.x1 }
   get y() { return this.y1 }
-  get w() { return this.x2 - this.x1 }
-  get h() { return this.y2 - this.y1 }
+  get w() { return Math.abs(this.x2 - this.x1) }
+  get h() { return Math.abs(this.y2 - this.y1) }
 
   get vertexData(): Float32Array {
     return new Float32Array(
@@ -369,6 +373,10 @@ export class Rectangle {
 
   get indices(): Uint16Array {
     return new Uint16Array([0, 1, 2, 0, 2, 3])
+  }
+
+  get area(): number {
+    return this.w * this.h
   }
 
   constructor(readonly vertices: Array<Vec2>) {

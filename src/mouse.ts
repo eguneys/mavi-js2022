@@ -103,6 +103,10 @@ export default class Mouse {
     }
   }
 
+  get up() {
+    return this._up > 0
+  }
+
   constructor(readonly $canvas: HTMLElement) { }
 
 
@@ -111,8 +115,8 @@ export default class Mouse {
 
     let { bounds } = this
 
-    let scaleX = 64 / bounds.width,
-      scaleY = 64 / bounds.height
+    let scaleX = 1,
+      scaleY = 1
 
     if (res) {
       res[0] -= bounds.left
@@ -132,6 +136,9 @@ export default class Mouse {
   }
 
   init() {
+
+    this._up = 0
+    this._up0 = 0
 
     let { $canvas, disposes } =  this
 
@@ -172,6 +179,7 @@ export default class Mouse {
         this._drag.drop = this.eventPosition(ev)
         this._drop0 = this._drag
       }
+      this._up = 1
     }
     document.addEventListener('mouseup', onMouseUp)
 
@@ -190,6 +198,14 @@ export default class Mouse {
   }
 
   update(dt: number, dt0: number) {
+
+    if (this._up0 === this._up) {
+      this._up = 0
+    } else {
+      this._up0 = this._up
+    }
+
+
     if (this._wheel0 === this._wheel) {
       this._wheel = 0
     } else {

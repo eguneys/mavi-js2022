@@ -2,6 +2,7 @@ import sprites_png from '../assets/sprites.png'
 import Canvas from './canvas'
 import P from './play'
 import { Vec2, Rectangle, Transform } from './math'
+import Mouse from './mouse'
 
 import { vSource, fSource } from './shaders'
 import { color_rgb } from './util'
@@ -46,6 +47,31 @@ function loop(fn: (dt: number, dt0: number) => void) {
   }
 }
 
+function make_bounds($element: HTMLElement) {
+
+  let _bounds
+  function set_bounds() {
+    _bounds = $element.getBoundingClientRect()
+  }
+  set_bounds()
+
+  document.addEventListener('scroll', () => set_bounds(), { capture: true, passive: true })
+  window.addEventListener('resize', () => set_bounds(), { passive: true })
+
+
+  return {
+    get bounds() {
+      return _bounds
+    }
+  }
+}
+
+const make_norm_mouse = (has_bounds: any) => {
+  return v => {
+    let { bounds } = has_bounds
+    return Vec2.make(v[0] / bounds.width * 1920, v[1] / bounds.height * 1080)
+  }
+}
 
 export default function app(element: HTMLElement) {
 
@@ -53,15 +79,20 @@ export default function app(element: HTMLElement) {
   load_image(sprites_png).then(image => {
 
     let play = new P(new Canvas(element))
+    let mouse = new Mouse(element).init()
+    let stage = new Transform()
+    let bounds = make_bounds(element)
 
     let ctx = {
-      p: play
+      m_nor: make_norm_mouse(bounds),
+      s: stage,
+      p: play,
+      m: mouse
     }
 
     play.glOnce()
     play.glClear()
 
-    let stage = new Transform()
     let nb = 256000
 
     let { program,
@@ -121,7 +152,7 @@ export default function app(element: HTMLElement) {
     }
 
 
-    let ss = set_stage(stage)
+    let ss = set_stage(ctx)
 
 
     loop((dt: number, dt0: number) => {

@@ -3,8 +3,9 @@ import { line } from './line'
 
 let template = new Transform()
 
-export function set_stage(stage: Transform) {
+export function set_stage(ctx: Context) {
 
+  let { s, m, m_nor } = ctx
 
   let free = [];
 
@@ -22,10 +23,7 @@ export function set_stage(stage: Transform) {
     line(free.pop(), ps[i].x, ps[i].y, ps[(i+1) % ps.length].x, ps[(i+1) % ps.length].y)._set_parent(ship)
   }
 
-
-  console.log(ps.length)
-
-  ship._set_parent(stage)
+  ship._set_parent(s)
 
   ship.pivot.x = 90
   ship.pivot.y = -35
@@ -36,12 +34,29 @@ export function set_stage(stage: Transform) {
   return {
     update(dt: number, dt0: number) {
 
+      let { hover } = m
+
+      if (hover) {
+        let h = m_nor(hover)
+        ship.x = lerp(ship.x, h.x, 0.333)
+        ship.y  = lerp(ship.y, h.y, 0.333)
+      }
+
       let scale = Math.abs(Math.sin(t++ * 0.1) * 3)
       ship.scale.x = scale
       ship.scale.y = scale
       ship.rotation += 0.05
     }
   }
+}
+
+/* https://gist.github.com/gre/1650294 */
+function ease(t: number) {
+    return t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+}
+
+function lerp(a: number, b: number, t: number = 0.5) {
+    return a + (b - a) * ease(t)
 }
 
 const vify = (v: Array<number>) => {

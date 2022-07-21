@@ -380,6 +380,25 @@ export class Rectangle {
   }
 
   constructor(readonly vertices: Array<Vec2>) {
+    let x0 = this.x1,
+      y0 = this.y1,
+      x1 = this.x2,
+      y1 = y0,
+      x2 = x1,
+      y2 = this.y2,
+      x3 = x0,
+      y3 = y2
+
+    this.fsUv = new Float32Array([
+      x0,
+      y0,
+      x1,
+      y1,
+      x2,
+      y2,
+      x3,
+      y3,
+    ])
   }
 
   transform(m: Matrix): Rectangle {

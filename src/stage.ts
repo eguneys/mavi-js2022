@@ -1,5 +1,7 @@
+import { ticks } from './shared'
 import { Vec2, Rectangle, Transform } from './math'
 import { line } from './line'
+import { p } from './audio'
 
 let template = new Transform()
 
@@ -7,22 +9,50 @@ export function set_stage(ctx: Context) {
 
   let { s, m, m_nor } = ctx
 
+  let updates = []
   let free = [];
 
-  [...Array(64)].forEach(_ => free.push(template.clone))
+  [...Array(640)].forEach(_ => free.push(template.clone))
 
-  let ship = template.clone
 
-  let ps = make_polygon()
-  for (let i = 0; i < ps.length; i++) {
-    //line(free.pop(), ps[i].x, ps[i].y, ps[(i+1) % 10].x, ps[(i+1) % 10].y)._set_parent(ship)
+  let polys = template.clone
+
+  let l = 0;
+  updates.push((dt: number, dt0: number) => {
+    let l0 = l
+    l += dt
+    if (Math.floor(l0 / ticks.seconds) !== Math.floor(l / ticks.seconds)) {
+      make_poly(400, 400)
+    }
+  })
+
+  function make_poly(x, y) {
+    let poly = template.clone
+    let ps = make_polygon()
+    for (let i = 0; i < ps.length; i++) {
+      line(free.pop(), ps[i].x, ps[i].y, ps[(i+1) % 10].x, ps[(i+1) % 10].y)._set_parent(poly)
+    }
+    poly.x = x
+    poly.y = y
+    poly._set_parent(polys)
+
+    let dir = Vec2.make(random(), random()).scale(8)
+    updates.push((dt: number, dt0: number) => {
+
+      poly.x += dir.x
+      poly.y += dir.y
+    })
   }
 
-  ps = ship_pols
+
+
+  let ship = template.clone
+  let ps = ship_pols
   for (let i = 0; i < ps.length; i++) {
     line(free.pop(), ps[i].x, ps[i].y, ps[(i+1) % ps.length].x, ps[(i+1) % ps.length].y)._set_parent(ship)
   }
 
+  polys._set_parent(s)
   ship._set_parent(s)
 
   ship.pivot.x = 90
@@ -34,8 +64,11 @@ export function set_stage(ctx: Context) {
   return {
     update(dt: number, dt0: number) {
 
-      let { hover } = m
+      let { click, hover } = m
 
+      if (click) {
+        p(0)
+      }
       if (hover) {
         let h = m_nor(hover)
         ship.x = lerp(ship.x, h.x, 0.333)
@@ -43,9 +76,10 @@ export function set_stage(ctx: Context) {
       }
 
       let scale = Math.abs(Math.sin(t++ * 0.1) * 3)
-      ship.scale.x = scale
-      ship.scale.y = scale
-      ship.rotation += 0.05
+
+
+      updates.forEach(_ => _(dt, dt0))
+
     }
   }
 }

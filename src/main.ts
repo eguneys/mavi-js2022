@@ -9,8 +9,6 @@ import { color_rgb } from './util'
 
 import { set_stage } from './stage'
 
-
-
 function load_image(path: string) {
   return new Promise(resolve => {
     let res = new Image()
@@ -120,6 +118,7 @@ export default function app(element: HTMLElement) {
         let { world, tint } = el
 
         let { area, vertexData, indices } = Rectangle.unit.transform(world)
+        let { fsUv } = Rectangle.unit
 
         if (area < 10) { continue }
 
@@ -129,8 +128,8 @@ export default function app(element: HTMLElement) {
           _attributeBuffer[aIndex++] = vertexData[k]
           _attributeBuffer[aIndex++] = vertexData[k+1]
 
-          _attributeBuffer[aIndex++] = 9//fsUv[k]
-          _attributeBuffer[aIndex++] = 9//fsUv[k+1]
+          _attributeBuffer[aIndex++] = fsUv[k]
+          _attributeBuffer[aIndex++] = fsUv[k+1]
 
           _attributeBuffer[aIndex++] = tintData[0]
           _attributeBuffer[aIndex++] = tintData[1]
@@ -156,6 +155,8 @@ export default function app(element: HTMLElement) {
 
 
     loop((dt: number, dt0: number) => {
+
+      mouse.update(dt, dt0)
 
       ss.update(dt, dt0)
 

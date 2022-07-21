@@ -26,6 +26,9 @@ void main() {
   color = vec4(1.0, 0.0, 0.0, 1.0);
   outColor = vec4(color.rgb * color.a, color.a);
   */
-  outColor = vec4(1.0, 1.0, 0.0, 1.0);
+  float y = vTextureCoord.y;
+  y = smoothstep(1.0, 0.0, y);
+  outColor = vec4(0.0, y, 0.0, 1.0);
 }
+
 `

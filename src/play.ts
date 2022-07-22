@@ -1,6 +1,9 @@
 import { ticks } from './shared'
-import { read, update, tween } from './anim'
+import { completed, read, update, tween } from './anim'
 
+function arr_remove(arr: Array<A>, a: A) {
+  arr.splice(arr.indexOf(a), 1)
+}
 
 abstract class Play {
 
@@ -46,10 +49,58 @@ abstract class Play {
 }
 
 
-class WithPlays extends Play {
+abstract class PlayObjects extends Play {
+
+  init() {
+    this.pre_objects = []
+    this.objects = []
+    this.objects2 = []
+    return super.init()
+  }
+
+
+  update(dt: number, dt0: number) {
+    this.pre_objects.forEach(_ => _.update(dt, dt0))
+    super.update(dt, dt0)
+    this.objects.forEach(_ => _.update(dt, dt0))
+    this.objects2.forEach(_ => _.update(dt, dt0))
+  }
+
+
+  draw() {
+    this.pre_objects.forEach(_ => _.draw())
+    this.g.flush()
+    super.draw()
+    this.g.flush()
+    this.objects.forEach(_ => _.draw())
+    this.g.flush()
+    this.objects2.forEach(_ => _.draw())
+    this.g.flush()
+  }
+}
+
+class WithPlays extends PlayObjects {
 
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
+  }
+
+  init() {
+    super.init()
+
+    let { group } = this.data
+
+    if (group) {
+      group.push(this)
+    }
+  }
+
+
+  dispose() {
+    let { group } = this.data
+    if (group) {
+      arr_remove(group, this)
+    }
   }
 }
 
@@ -57,38 +108,37 @@ class VanishCircle extends WithPlays {
 
   _init() {
     let { radius } = this.data
-    this._rt = tween([0.8, 0.8, 1, 0.2].map(_ => _ * radius), [ticks.sixth, ticks.sixth, ticks.sixth])
+    let radius2 = radius * 0.8 
+    this._rt = tween([0.8, 0.8, 1, 0.2].map(_ => _ * radius), [ticks.three, ticks.three * 2, ticks.three * 3])
+
   }
 
   _update(dt: number, dt0: number) {
     update(this._rt, dt, dt0)
+
+    if (completed(this._rt)) {
+      this.dispose()
+    }
   }
 
   _draw() {
-    let [radius, completed] = read(this._rt)
-
-    if (!completed) {
-      console.log(radius)
-    }
-    this.g.fc(500, 500, radius, 'red')
+    let { x, y, color } = this.data
+    let [radius] = read(this._rt)
+    this.g.fc(x, y, radius, color)
   }
 }
 
-export default class AllPlays extends Play {
+export default class AllPlays extends PlayObjects {
 
   _init() {
-
-    this.objects = []
-    
-    this.objects.push(new VanishCircle(this)._set_data({ radius: 100}).init())
+    new VanishCircle(this)._set_data({ 
+      group: this.objects, 
+      x: 100,
+      y: 100,
+      radius: 100, 
+      color: 'red' }).init()
   }
 
-  _update(dt: number, dt0: number) {
-    this.objects.forEach(_ => _.update(dt, dt0))
-  }
-
-  _draw() {
-    this.objects.forEach(_ => _.draw())
-  }
-
+  _update(dt: number, dt0: number) {}
+  _draw() {}
 }

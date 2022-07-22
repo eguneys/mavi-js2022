@@ -1,3 +1,7 @@
+export function completed(t: Tween) {
+  return t[0]()[1]
+}
+
 export function read(t: Tween) {
   return t[0]()
 }

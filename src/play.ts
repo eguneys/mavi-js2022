@@ -108,9 +108,10 @@ abstract class PlayMakes extends PlayObjects {
     let makes = this.makess.pop()
 
     if (makes) {
-      let [[_make, rest], _pos] = makes
+      let [[_make, rest], _pos, _on_dispose] = makes
       let _rest = rest.map(_ => arr_rnd(_))
-      _make.make(this, this.objects, _pos, ..._rest)
+      let res = _make.make(this, this.objects, _pos, ..._rest)
+      res.on_dispose.push(_on_dispose)
     }
     super.update(dt, dt0)
   }
@@ -120,16 +121,17 @@ abstract class WithPlays extends PlayMakes {
 
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
+
+    this.on_dispose = []
   }
 
   init() {
-    super.init()
-
     let { group } = this.data
 
     if (group) {
       group.push(this)
     }
+    return super.init()
   }
 
 
@@ -138,6 +140,7 @@ abstract class WithPlays extends PlayMakes {
     if (group) {
       arr_remove(group, this)
     }
+    this.on_dispose.forEach(_ => _(this))
     this._dispose()
   }
 
@@ -196,11 +199,13 @@ let makes = [VanishCircle, [xs, ys, radiuss, colors]]
 export default class AllPlays extends PlayMakes {
 
   _init() {
+    this.makess.push([makes, Vec2.make(100, 100), _ => {
+      this.makess.push([makes, Vec2.make(200, 200), _ => {}])
+    }])
   }
 
   _update(dt: number, dt0: number) {
 
-    this.makess.push([makes, Vec2.make(100, 100)])
   }
   _draw() {}
 }

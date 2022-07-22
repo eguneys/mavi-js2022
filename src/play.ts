@@ -187,11 +187,51 @@ class VanishCircle extends WithPlays {
   }
 }
 
+class Level1 extends WithPlays {
+
+  static make = (base, group, v_pos: Vec2) => {
+    return new Level1(base)._set_data({ 
+      group,
+      v_pos
+    }).init()
+  }
+
+  _init() {
+
+  }
+
+  _update(dt: number, dt0: number) {}
+
+  _draw() {}
+}
+
+
+class Level2 extends WithPlays {
+
+  static make = (base, group, v_pos: Vec2) => {
+    return new Level2(base)._set_data({ 
+      group,
+      v_pos
+    }).init()
+  }
+
+  _init() {
+
+  }
+
+  _update(dt: number, dt0: number) {}
+
+  _draw() {}
+}
+
 let colors = ['red', 'white']
 let radiuss = [0, 10, 20]
 let xs = [0, 10, 20]
 let ys = [0, 10, 20]
 let makes = [VanishCircle, [xs, ys, radiuss, colors]]
+
+let level1 = [Level1, []]
+let level2 = [Level2, []]
 
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
@@ -199,9 +239,15 @@ let makes = [VanishCircle, [xs, ys, radiuss, colors]]
 export default class AllPlays extends PlayMakes {
 
   _init() {
-    this.makess.push([makes, Vec2.make(100, 100), _ => {
-      this.makess.push([makes, Vec2.make(200, 200), _ => {}])
-    }])
+    const push_level = (levels) => {
+      let level = levels.shift()
+      if (level) {
+        this.makess.push([level, Vec2.make(0, 0), _ => {
+          push_level(levels)
+        }])
+      }
+    }
+    push_level([level1, level2])
   }
 
   _update(dt: number, dt0: number) {

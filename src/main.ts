@@ -1,9 +1,10 @@
 import { Vec2 } from './vec2'
 import Mouse from './mouse'
 import Graphics from './graphics'
+import Play from './play'
 
-let w = 320 * 2
-let h = 180 * 2
+let w = 1920
+let h = 1080
 
 function loop(fn: (dt: number, dt0: number) => void) {
   let animation_frame_id
@@ -81,21 +82,18 @@ export default function app(element: HTMLElement) {
     m
   }
 
+  let p = new Play(_ctx).init()
 
   loop((dt: number, dt0: number) => {
 
+    m.update(dt, dt0)
+    p.update(dt, dt0)
+
     g.clear()
-
     g.fr(0, 0, w, h, 'lightblue')
-
     g.flush()
 
-    g.fc(150, 50, 50, 'lightyellow')
-    g.fc(0, 30, 150, 'lightyellow')
-    g.fc(300, 30, 50, 'lightyellow')
-    g.fc(320, 160, 50, 'lightyellow')
-    g.fc(600, 260, 50, 'lightyellow')
-    g.fc(320, 363, 50, 'lightyellow')
+    p.draw()
 
     g.flush()
   })

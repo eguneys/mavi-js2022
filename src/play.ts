@@ -97,7 +97,26 @@ abstract class PlayObjects extends Play {
   }
 }
 
-abstract class WithPlays extends PlayObjects {
+abstract class PlayMakes extends PlayObjects {
+
+  init() {
+    this.makess = []
+    return super.init()
+  }
+
+  update(dt: number, dt0: number) {
+    let makes = this.makess.pop()
+
+    if (makes) {
+      let [[_make, rest], _pos] = makes
+      let _rest = rest.map(_ => arr_rnd(_))
+      _make.make(this, this.objects, _pos, ..._rest)
+    }
+    super.update(dt, dt0)
+  }
+}
+
+abstract class WithPlays extends PlayMakes {
 
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
@@ -125,6 +144,7 @@ abstract class WithPlays extends PlayObjects {
 
   abstract _dispose(): void;
 }
+
 
 class VanishCircle extends WithPlays {
 
@@ -173,17 +193,14 @@ let makes = [VanishCircle, [xs, ys, radiuss, colors]]
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
 
-export default class AllPlays extends PlayObjects {
+export default class AllPlays extends PlayMakes {
 
   _init() {
-      }
+  }
 
   _update(dt: number, dt0: number) {
-    let [_make, rest] = makes
 
-    let _rest = rest.map(_ => arr_rnd(_))
-    let pos = Vec2.make(300, 300)
-    _make.make(this, this.objects, pos, ..._rest)
+    this.makess.push([makes, Vec2.make(100, 100)])
   }
   _draw() {}
 }

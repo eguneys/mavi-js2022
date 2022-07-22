@@ -48,7 +48,7 @@ export default class Graphics {
 
     this.arcs.forEach(_ => {
       let [x, y, r, color] = _
-      this._fc(x + off, y + off, r)
+      this._fc(x + off - x * 0.008 + r * 0.008, y + off - y * 0.012 + r * 0.008, r)
     })
 
 

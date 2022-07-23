@@ -194,8 +194,8 @@ class Cylinder extends WithPlays {
   }
 
   _draw() {
-    let { vs, heading } = this._bh._body
-    this.g.queue('darkred', true, this.g._frr, heading.angle, vs.x, vs.y, 30, 100, 10)
+    let { vs, side } = this._bh._body
+    this.g.queue('darkred', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
   }
 
 

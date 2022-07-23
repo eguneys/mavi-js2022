@@ -192,12 +192,7 @@ class Cursor extends WithPlays {
   _update(dt: number, dt0: number) {
 
 
-    let { hover } = this.m
-
-    if (hover) {
-      let v = this.ctx.m_nor(hover)
-      this.v_target.set_in(v.x, v.y)
-    }
+    this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
     this._bh.update(dt, dt0)
   }

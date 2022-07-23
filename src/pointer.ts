@@ -71,7 +71,6 @@ export class Pointer implements BindAdapter {
   onUp = () => {}
 
   update(dt: number, dt0: number) {
-    console.log(this.pos)
   }
 
   init(device: BindDevice) {

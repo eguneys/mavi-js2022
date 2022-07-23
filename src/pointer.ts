@@ -1,5 +1,7 @@
+import { Vec2 } from './vec2'
+
 export interface BindAdapter {
-  onMove: (e: [number, number]) => void;
+  onMove: (v: Vec2) => void;
   onClick: () => void;
   onDown: () => void;
   onUp: () => void;
@@ -8,7 +10,9 @@ export interface BindAdapter {
 export function bind_pointer($element) {
   return (hooks: BindAdapter) => {
 
-    let { onMove, onClick, onDown, onUp } = hooks
+    let { onClick, onDown, onUp } = hooks
+
+    const onMove = e => hooks.onMove(Vec2.make(e.movementX, e.movementY))
 
     const test_pointer_lock = (on_pointer_lock, on_no_lock) => {
       return () => {
@@ -44,20 +48,30 @@ export function bind_pointer($element) {
 }
 
 
+
 export class Pointer implements BindAdapter {
 
+  bounds: Vec2 = Vec2.make(1920, 1080)
+  pos: Vec2 = this.bounds.half
 
-  onMove = (e) => {
+  onMove = (v: Vec2) => {
+
+    let { pos, bounds } = this
+
+    pos.add_in(v)
+
+    pos.x = Math.min(bounds.x, Math.max(0, pos.x))
+    pos.y = Math.min(bounds.y, Math.max(0, pos.y))
   }
 
-  onClick = () => {
-  }
+  onClick = () => {}
 
   onDown = () => {}
 
   onUp = () => {}
 
   update(dt: number, dt0: number) {
+    console.log(this.pos)
   }
 
   init(device: BindDevice) {

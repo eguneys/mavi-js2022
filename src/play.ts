@@ -211,7 +211,11 @@ class MakeMake extends WithPlays {
       let pos = poss.shift() || Vec2.make(0, 0)
       if (level) {
         this.makess.push([level, pos, _ => {
-          push_level(levels, poss)
+          if(levels.length === 0) {
+            this.dispose()
+          } else {
+            push_level(levels, poss)
+          }
         }])
       }
     }
@@ -221,6 +225,8 @@ class MakeMake extends WithPlays {
   _update(dt: number, dt0: number) {}
 
   _draw() {}
+
+  _dispose() {}
 }
 
 class Level1 extends WithPlays {
@@ -234,17 +240,21 @@ class Level1 extends WithPlays {
 
   _init() {
 
-    let levels = [...Array(100)].map(_ => vanish_circle)
-    let poss = [...Array(100)].map(_ => rnd_vec(v_screen).scale(0.8)
+    let levels = [...Array(10)].map(_ => vanish_circle)
+    let poss = [...Array(10)].map(_ => rnd_vec(v_screen).scale(0.8)
                                   .add(v_screen.scale(0.1)))
     let makemake = [MakeMake, [[levels], [poss]]]
 
-    this.makess.push([makemake, Vec2.zero, _ => { }])
+    this.makess.push([makemake, Vec2.zero, _ => {
+      this.dispose()
+    }])
   }
 
   _update(dt: number, dt0: number) {}
 
   _draw() {}
+
+  _dispose() {}
 }
 
 
@@ -259,6 +269,7 @@ class Level2 extends WithPlays {
 
   _init() {
 
+    console.log('level2')
   }
 
   _update(dt: number, dt0: number) {}

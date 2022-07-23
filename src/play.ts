@@ -121,7 +121,7 @@ abstract class PlayMakes extends PlayObjects {
   }
 
   update(dt: number, dt0: number) {
-    let makes = this.makess.pop()
+    let makes = this.makess.shift()
 
     if (makes) {
       let [[_make, rest], _pos, _on_dispose] = makes
@@ -165,6 +165,42 @@ abstract class WithPlays extends PlayMakes {
 }
 
 
+class Cylinder extends WithPlays {
+
+  static make = (base, group, v_pos: Vec2) => {
+    return new Cylinder(base)._set_data({ 
+      group,
+      v_pos
+    }).init()
+  }
+
+  _init() {
+
+
+    let { v_pos } = this.data
+    this.v_target = Vec2.make(100, 100)
+
+    this._bh = steer_behaviours(v_pos, {
+      mass: 1000,
+      air_friction: 1,
+      max_speed: 30,
+      max_force: 50
+    }, [[b_arrive_steer(this.v_target), 1]])
+  }
+
+  _update(dt: number, dt0: number) {
+    this.v_target.set_in(this.m.pos.x, this.m.pos.y)
+    this._bh.update(dt, dt0)
+  }
+
+  _draw() {
+    let { vs, heading } = this._bh._body
+    this.g.queue('darkred', true, this.g._frr, heading.angle, vs.x, vs.y, 30, 100, 10)
+  }
+
+
+  _dispose() {}
+}
 
 class Cursor extends WithPlays {
 
@@ -199,7 +235,7 @@ class Cursor extends WithPlays {
 
   _draw() {
     let { vs } = this._bh._body
-    this.g.fc(vs.x, vs.y, 30, 'lightyellow')
+    this.g.queue('lightyellow', true, this.g._fc, vs.x, vs.y, 30)
   }
 
 
@@ -237,7 +273,7 @@ class VanishDot extends WithPlays {
 
   _draw() {
     let { v_pos, x, y, color } = this.data
-    this.g.fc(v_pos.x + x, v_pos.y + y, 30, color)
+    this.g.queue(color, true, this.g._fc, v_pos.x + x + x, v_pos.y + y, 30)
   }
 
 
@@ -274,7 +310,7 @@ class VanishCircle extends WithPlays {
   _draw() {
     let { v_pos, x, y, color } = this.data
     let [radius] = read(this._rt)
-    this.g.fc(v_pos.x + x, v_pos.y + y, radius, color)
+    this.g.queue(color, true, this.g._fc, v_pos.x + x, v_pos.y + y, radius)
   }
 
 
@@ -466,6 +502,7 @@ class Level2 extends WithPlays {
 
     this.makess.push([[Cursor, []], Vec2.unit, () => {}])
 
+    this.makess.push([[Cylinder, []], Vec2.unit, () => {}])
   }
 
   _update(dt: number, dt0: number) {}

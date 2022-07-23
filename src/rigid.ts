@@ -118,6 +118,19 @@ export function rigid_body(vs: Vec2, opts: RigidOptions) {
     get velocity() {
       return Vec2.make(r_x.vx, r_y.vx)
     },
+    get pos() {
+      return this.vs
+    },
+    get heading() { 
+      let heading = this.velocity.normalize
+      return heading.length === 0 ? Vec2.unit : heading
+    },
+    get side() { 
+      return this.heading.perpendicular
+    },
+    get matrix() {
+      rotate_matrix(this.heading, this.side, this.pos)
+    },
     get max_speed() {
       return opts.max_speed
     }

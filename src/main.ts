@@ -89,7 +89,7 @@ export default function app(element: HTMLElement) {
     p.update(dt, dt0)
 
     g.clear()
-    g.fr(0, 0, w, h, 'lightblue')
+    g.queue('lightblue', false, g._fr, 0, 0, 0, w, h)
     g.flush()
 
     p.draw()

@@ -1,7 +1,7 @@
 import { Vec2 } from './vec2'
-import Mouse from './mouse'
 import Graphics from './graphics'
 import Play from './play'
+import { Pointer, bind_pointer } from './pointer'
 
 let w = 1920
 let h = 1080
@@ -73,11 +73,10 @@ export default function app(element: HTMLElement) {
   let g = new Graphics(w, h, ctx)
 
 
-  let m = new Mouse(element).init()
+  let m = new Pointer().init(bind_pointer(canvas))
   let bounds = make_bounds(element)
 
   let _ctx = {
-    m_nor: make_norm_mouse(bounds),
     g,
     m
   }

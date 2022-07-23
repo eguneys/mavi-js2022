@@ -65,7 +65,7 @@ abstract class Play {
   }
 
   on_interval(t: number) {
-    return Math.floor(this.life0 / t) !== Math.floor(this.life / v)
+    return Math.floor(this.life0 / t) !== Math.floor(this.life / t)
   }
 
   abstract _init(): void;
@@ -171,7 +171,7 @@ class VanishCircle extends WithPlays {
   _init() {
     let { radius } = this.data
     let radius2 = radius * 0.8 
-    this._rt = tween([0.8, 0.8, 1, 0.2].map(_ => _ * radius), [ticks.three, ticks.three * 2, ticks.three * 3])
+    this._rt = tween([0.8, 0.8, 1, 0.2].map(_ => _ * radius), [ticks.five, ticks.three * 2, ticks.three * 2])
 
   }
 
@@ -194,9 +194,9 @@ class VanishCircle extends WithPlays {
   }
 }
 
-class MakeMake extends WithPlays {
+class MakeSeries extends WithPlays {
   static make = (base, group, v_pos: Vec2, levels: Levels, poss: Array<Vec2> = []) => {
-    return new MakeMake(base)._set_data({
+    return new MakeSeries(base)._set_data({
       poss,
       levels,
       group,
@@ -211,12 +211,10 @@ class MakeMake extends WithPlays {
       let pos = poss.shift() || Vec2.make(0, 0)
       if (level) {
         this.makess.push([level, pos, _ => {
-          if(levels.length === 0) {
-            this.dispose()
-          } else {
-            push_level(levels, poss)
-          }
+          push_level(levels, poss)
         }])
+      } else {
+        this.dispose()
       }
     }
     push_level(this.data.levels, this.data.poss)
@@ -229,6 +227,71 @@ class MakeMake extends WithPlays {
   _dispose() {}
 }
 
+class DelayDispose extends WithPlays {
+
+  static make = (base, group, v_pos: Vec2, delay: number) => {
+    return new DelayDispose(base)._set_data({ 
+      delay,
+      group,
+      v_pos
+    }).init()
+  }
+
+  _init() {}
+
+  _update(dt: number, dt0: number) {
+
+    if (this.on_interval(this.data.delay)) {
+      this.dispose()
+    }
+  }
+
+  _draw() {}
+
+  _dispose() {}
+ 
+}
+
+let delay = [DelayDispose, [[ticks.sixth]]]
+
+
+
+class ExCloud extends WithPlays {
+
+  static make = (base, group, v_pos: Vec2) => {
+    return new ExCloud(base)._set_data({ 
+      group,
+      v_pos
+    }).init()
+  }
+
+  _init() {
+    let radiuss = [0, 10, 20]
+    let xs = [0, 10, 20]
+    let ys = [0, 10, 20]
+    let red_vanish_circle = [VanishCircle, [xs, ys, radiuss, ['red']]]
+    let white_vanish_circle = [VanishCircle, [xs, ys, radiuss, ['white']]]
+
+    this.makess.push([white_vanish_circle, this.data.v_pos, () => {}])
+    this.makess.push([delay, Vec2.unit, () => {
+      this.makess.push([red_vanish_circle, this.data.v_pos, () => {
+        this.dispose()
+      }])
+    }])
+  }
+
+  _update(dt: number, dt0: number) {}
+
+  _draw() {}
+
+  _dispose() {}
+
+
+}
+
+
+let excloud = [ExCloud, []]
+
 class Level1 extends WithPlays {
 
   static make = (base, group, v_pos: Vec2) => {
@@ -240,10 +303,10 @@ class Level1 extends WithPlays {
 
   _init() {
 
-    let levels = [...Array(10)].map(_ => vanish_circle)
+    let levels = [...Array(10)].map(_ => excloud)
     let poss = [...Array(10)].map(_ => rnd_vec(v_screen).scale(0.8)
                                   .add(v_screen.scale(0.1)))
-    let makemake = [MakeMake, [[levels], [poss]]]
+    let makemake = [MakeSeries, [[levels], [poss]]]
 
     this.makess.push([makemake, Vec2.zero, _ => {
       this.dispose()
@@ -277,19 +340,13 @@ class Level2 extends WithPlays {
   _draw() {}
 }
 
-let colors = ['red', 'white']
-let radiuss = [0, 10, 20]
-let xs = [0, 10, 20]
-let ys = [0, 10, 20]
-let vanish_circle = [VanishCircle, [xs, ys, radiuss, colors]]
-
 
 let level1 = [Level1, []]
 let level2 = [Level2, []]
 
 let levels = [level1, level2]
 
-let make_levels = [MakeMake, [[levels]]]
+let make_levels = [MakeSeries, [[levels]]]
 
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy

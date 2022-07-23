@@ -14,8 +14,16 @@ const random = make_random()
 
 let v_screen = Vec2.make(1920, 1080)
 
-function rnd_vec(mv: Vec2, rng: RNG = random) {
-  return Vec2.make(rnd_int(mv.x, rng), rnd_int(mv.y, rng))
+function rnd_vec_h(rng: RNG = random) {
+  return Vec2.make(rnd_h(rng), rnd_h(rng))
+}
+
+function rnd_vec(mv: Vec2 = Vec2.unit, rng: RNG = random) {
+  return Vec2.make(rng(), rng()).mul(mv)
+}
+
+function rnd_h(rng: RNG = random) {
+  return rng() * 2 - 1
 }
 
 function rnd_int(max: number, rng: RNG = random) {
@@ -156,6 +164,45 @@ abstract class WithPlays extends PlayMakes {
 }
 
 
+class VanishDot extends WithPlays {
+
+  static make = (base, group, v_pos: Vec2, x, y, v_dir: Vec2, color) => {
+    return new VanishDot(base)._set_data({ 
+      group,
+      v_pos,
+      v_dir,
+      x,
+      y,
+      color }).init()
+  }
+
+  _init() {
+    let radius = 300
+    this._rt = tween([0, 1].map(_ => _ * radius), [arr_rnd([ticks.three * 2, ticks.five * 2])])
+  }
+
+  _update(dt: number, dt0: number) {
+    update(this._rt, dt, dt0)
+
+    let { v_pos, v_dir } = this.data
+    let [radius] = read(this._rt)
+    v_pos.add_in(v_dir.scale((300 - radius) * 0.5))
+
+    if (completed(this._rt)) {
+      this.dispose()
+    }
+  }
+
+  _draw() {
+    let { v_pos, x, y, color } = this.data
+    this.g.fc(v_pos.x + x, v_pos.y + y, 30, color)
+  }
+
+
+  _dispose() {
+  }
+}
+
 class VanishCircle extends WithPlays {
 
   static make = (base, group, v_pos: Vec2, x, y, radius, color) => {
@@ -170,7 +217,6 @@ class VanishCircle extends WithPlays {
 
   _init() {
     let { radius } = this.data
-    let radius2 = radius * 0.8 
     this._rt = tween([0.8, 0.8, 1, 0.2].map(_ => _ * radius), [ticks.five, ticks.three * 2, ticks.three * 2])
 
   }
@@ -311,6 +357,10 @@ class ExCloud extends WithPlays {
     this.makess.push([spam, this.data.v_pos, () => {
       this.dispose()
     }])
+
+
+    let red_dot = [VanishDot, [xs, ys, [rnd_vec_h(), rnd_vec_h(), rnd_vec_h()], ['red']]]
+    this.makess.push([red_dot, this.data.v_pos.clone, () => {}])
   }
 
   _update(dt: number, dt0: number) {}

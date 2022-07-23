@@ -194,6 +194,39 @@ class VanishCircle extends WithPlays {
   }
 }
 
+class MakeSpam extends WithPlays {
+  static make = (base, group, v_pos: Vec2, levels: Levels, delays: Array<number>, poss: Array<Vec2> = []) => {
+    return new MakeSpam(base)._set_data({
+      poss,
+      levels,
+      delays,
+      group,
+      v_pos
+    }).init()
+  }
+
+
+  _init() {
+  const push_level = (levels, poss) => {
+      let level = levels.shift()
+      let pos = poss.shift() || Vec2.make(0, 0)
+      if (level) {
+        let delay = [DelayDispose, [this.data.delays]]
+        this.makess.push([level, pos, _ => {}])
+        this.makess.push([delay, pos, _ => { push_level(levels, poss) }])
+      } else {
+        this.dispose()
+      }
+    }
+    push_level(this.data.levels, this.data.poss)
+  }
+
+  _update(dt: number, dt0: number) {}
+
+  _draw() {}
+
+  _dispose() {}
+}
 class MakeSeries extends WithPlays {
   static make = (base, group, v_pos: Vec2, levels: Levels, poss: Array<Vec2> = []) => {
     return new MakeSeries(base)._set_data({
@@ -240,7 +273,6 @@ class DelayDispose extends WithPlays {
   _init() {}
 
   _update(dt: number, dt0: number) {
-
     if (this.on_interval(this.data.delay)) {
       this.dispose()
     }
@@ -303,10 +335,11 @@ class Level1 extends WithPlays {
 
   _init() {
 
-    let levels = [...Array(10)].map(_ => excloud)
-    let poss = [...Array(10)].map(_ => rnd_vec(v_screen).scale(0.8)
+    let levels = [...Array(100)].map(_ => excloud)
+    let delays = [ticks.three * 2, ticks.three, ticks.five, ticks.seconds, ticks.half]
+    let poss = [...Array(100)].map(_ => rnd_vec(v_screen).scale(0.8)
                                   .add(v_screen.scale(0.1)))
-    let makemake = [MakeSeries, [[levels], [poss]]]
+    let makemake = [MakeSpam, [[levels], [delays], [poss]]]
 
     this.makess.push([makemake, Vec2.zero, _ => {
       this.dispose()

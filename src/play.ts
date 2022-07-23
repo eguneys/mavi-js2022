@@ -12,8 +12,10 @@ const make_random = (seed = 1) => {
 }
 const random = make_random()
 
-function rnd_vec(mx: number, my: number, rng: RNG = random) {
-  return Vec2.make(rnd_int(mx, rng), rnd_int(my, rng))
+let v_screen = Vec2.make(1920, 1080)
+
+function rnd_vec(mv: Vec2, rng: RNG = random) {
+  return Vec2.make(rnd_int(mv.x, rng), rnd_int(mv.y, rng))
 }
 
 function rnd_int(max: number, rng: RNG = random) {
@@ -232,12 +234,12 @@ class Level1 extends WithPlays {
 
   _init() {
 
-    let levels = [...Array(10)].map(_ => vanish_circle)
-    let poss = [...Array(10)].map(_ => rnd_vec(1920, 1080).scale(0.8)
-                                  .add(Vec2.make(1920, 1080).scale(0.1)))
+    let levels = [...Array(100)].map(_ => vanish_circle)
+    let poss = [...Array(100)].map(_ => rnd_vec(v_screen).scale(0.8)
+                                  .add(v_screen.scale(0.1)))
     let makemake = [MakeMake, [[levels], [poss]]]
 
-    this.makess.push([makemake, Vec2.make(0, 0), _ => { }])
+    this.makess.push([makemake, Vec2.zero, _ => { }])
   }
 
   _update(dt: number, dt0: number) {}

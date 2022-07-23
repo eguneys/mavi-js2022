@@ -2,6 +2,7 @@ import { ticks } from './shared'
 import { completed, read, update, tween } from './anim'
 import { Vec2 } from './vec2'
 import { make_sticky_pos } from './make_sticky'
+import { steer_behaviours, b_arrive_steer } from './rigid'
 
 /* https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript */
 const make_random = (seed = 1) => {
@@ -163,6 +164,52 @@ abstract class WithPlays extends PlayMakes {
   abstract _dispose(): void;
 }
 
+
+
+class Cursor extends WithPlays {
+
+  static make = (base, group, v_pos: Vec2) => {
+    return new Cursor(base)._set_data({ 
+      group,
+      v_pos
+    }).init()
+  }
+
+  _init() {
+
+
+    let { v_pos } = this.data
+    this.v_target = Vec2.make(100, 100)
+
+    this._bh = steer_behaviours(v_pos, {
+      mass: 1000,
+      air_friction: 1,
+      max_speed: 30,
+      max_force: 50
+    }, [[b_arrive_steer(this.v_target), 1]])
+  }
+
+  _update(dt: number, dt0: number) {
+
+
+    let { hover } = this.m
+
+    if (hover) {
+      let v = this.ctx.m_nor(hover)
+      this.v_target.set_in(v.x, v.y)
+    }
+
+    this._bh.update(dt, dt0)
+  }
+
+  _draw() {
+    let { vs } = this._bh._body
+    this.g.fc(vs.x, vs.y, 30, 'lightyellow')
+  }
+
+
+  _dispose() {}
+}
 
 class VanishDot extends WithPlays {
 
@@ -386,6 +433,10 @@ class Level1 extends WithPlays {
 
   _init() {
 
+    this.makess.push([delay, Vec2.zero, _ => {
+      this.dispose()
+    }])
+
     let levels = [...Array(100)].map(_ => excloud)
     let delays = [ticks.three * 2, ticks.three, ticks.five, ticks.seconds, ticks.half]
     let poss = [...Array(100)].map(_ => rnd_vec(v_screen).scale(0.8)
@@ -395,6 +446,7 @@ class Level1 extends WithPlays {
     this.makess.push([makemake, Vec2.zero, _ => {
       this.dispose()
     }])
+
   }
 
   _update(dt: number, dt0: number) {}
@@ -416,7 +468,9 @@ class Level2 extends WithPlays {
 
   _init() {
 
-    console.log('level2')
+
+    this.makess.push([[Cursor, []], Vec2.unit, () => {}])
+
   }
 
   _update(dt: number, dt0: number) {}

@@ -209,7 +209,7 @@ class MakeSpam extends WithPlays {
   _init() {
   const push_level = (levels, poss) => {
       let level = levels.shift()
-      let pos = poss.shift() || Vec2.make(0, 0)
+      let pos = poss.shift() || Vec2.zero
       if (level) {
         let delay = [DelayDispose, [this.data.delays]]
         this.makess.push([level, pos, _ => {}])
@@ -298,17 +298,18 @@ class ExCloud extends WithPlays {
   }
 
   _init() {
-    let radiuss = [0, 10, 20]
+    let radiuss = [0, 30, 50]
     let xs = [0, 10, 20]
     let ys = [0, 10, 20]
     let red_vanish_circle = [VanishCircle, [xs, ys, radiuss, ['red']]]
     let white_vanish_circle = [VanishCircle, [xs, ys, radiuss, ['white']]]
 
-    this.makess.push([white_vanish_circle, this.data.v_pos, () => {}])
-    this.makess.push([delay, Vec2.unit, () => {
-      this.makess.push([red_vanish_circle, this.data.v_pos, () => {
-        this.dispose()
-      }])
+    let spam = [MakeSpam, 
+      [[[white_vanish_circle, red_vanish_circle]], 
+        [[ticks.sixth, ticks.three * 2]], 
+        [[this.data.v_pos, this.data.v_pos]]]]
+    this.makess.push([spam, this.data.v_pos, () => {
+      this.dispose()
     }])
   }
 

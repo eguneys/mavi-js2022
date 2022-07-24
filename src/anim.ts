@@ -1,3 +1,5 @@
+/* https://gist.github.com/eguneys/8ca56803e01fadb28a2045931f83293d */
+
 export function completed(t: Tween) {
   return t[0]()[1]
 }

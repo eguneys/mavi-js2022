@@ -155,7 +155,10 @@ export function steer_behaviours(vs: Vec2, opts: RigidOptions, bs: Array<Behavio
 
   return {
     _body, 
-    update
+    bs(_bs: Array<Behaviour>) {
+      bs = _bs
+    },
+    update,
   }
 }
 

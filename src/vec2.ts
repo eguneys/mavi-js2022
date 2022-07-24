@@ -336,3 +336,49 @@ export class Matrix {
 
 }
 
+export class Rectangle {
+
+  static make = (x: number, y: number,
+    w: number, h: number) => new Rectangle([
+      Vec2.make(x, y),
+      Vec2.make(x + w, y),
+      Vec2.make(x + w, y + h),
+      Vec2.make(x, y + h)
+    ])
+
+
+  static get unit() { return Rectangle.make(0, 0, 1, 1) }
+
+
+  get vs() { 
+    let { x, y, w, h } = this
+    return [x, y, w, h] 
+  }
+
+  
+  get x1() { return this.vertices[0].x }
+  get y1() { return this.vertices[0].y }
+  get x2() { return this.vertices[2].x }
+  get y2() { return this.vertices[2].y }
+
+  get x() { return this.x1 }
+  get y() { return this.y1 }
+  get w() { return this.x2 - this.x1 }
+  get h() { return this.y2 - this.y1 }
+
+  get center() {
+    return Vec2.make(this.x + this.w / 2,
+                     this.y + this.h / 2)
+  }
+
+  larger(r: number) {
+    return Rectangle.make(this.x - r, this.y - r,
+                          this.w + r, this.h + r)
+  }
+
+  constructor(readonly vertices: Array<Vec2>) {}
+
+  transform(m: Matrix): Rectangle {
+    return new Rectangle(this.vertices.map(_ => m.mVec2(_)))
+  }
+}

@@ -1,9 +1,17 @@
 import { ticks } from './shared'
 import { completed, read, update, tween } from './anim'
-import { Vec2 } from './vec2'
+import { Vec2, Rectangle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
 import { steer_behaviours, b_arrive_steer } from './rigid'
 import psfx from './audio'
+
+const rect_orig = (rect: Rectangle, o: Vec2) => {
+  return rect.x1 <= o.x && o.x <= rect.x2 && rect.y1 <= o.y && o.y <= rect.y2
+}
+
+const circ_orig = (o: Vec2, r: number, v: Vec2) => {
+  return o.distance(v) <= r
+}
 
 /* https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript */
 const make_random = (seed = 1) => {
@@ -104,36 +112,62 @@ abstract class WithPlays extends Play {
   }
 
 
-  dispose() {
+  dispose(reason: string) {
     let { group } = this.data
     if (group) {
       arr_remove(group, this)
     }
-    this.on_dispose.forEach(_ => _(this))
-    this._dispose()
+    this.on_dispose.forEach(_ => _(this, reason))
+    this._dispose(reason)
   }
 
 
-  abstract _dispose(): void;
+  abstract _dispose(_: string): void;
 }
 
+abstract class WithRigidPlays extends WithPlays {
 
-class Cylinder extends WithPlays {
+  abstract r_opts: RigidOptions;
+  abstract r_bs: Array<Behaviour>;
+  abstract r_wh: Vec2;
+
+  get vs() {
+    return this._bh._body.vs
+  }
+
+  get rect() {
+    let { vs, r_wh } = this
+    return Rectangle.make(vs.x, vs.y, r_wh.x, r_wh.y)
+  }
+
+  init() {
+
+    let { v_pos } = this.data
+    this._bh = steer_behaviours(v_pos, this.r_opts, this.r_bs)
+
+    super.init()
+  }
+}
+
+class Cylinder extends WithRigidPlays {
+
+  v_target = Vec2.unit
+
+  r_opts = {
+    mass: 1000,
+    air_friction: 0.9,
+    max_speed: 100,
+    max_force: 3
+  }
+  r_bs = [[b_arrive_steer(this.v_target), 1]]
+  r_wh = Vec2.make(40, 80)
+
 
   _init() {
 
 
     let { v_pos } = this.data
     this._cursor = this.plays.one(Cursor)
-
-    this.v_target = this._cursor.pursue_target
-
-    this._bh = steer_behaviours(v_pos, {
-      mass: 1000,
-      air_friction: 0.9,
-      max_speed: 100,
-      max_force: 3
-    }, [[b_arrive_steer(this.v_target), 1]])
   }
 
   _update(dt: number, dt0: number) {
@@ -148,43 +182,54 @@ class Cylinder extends WithPlays {
   }
 
 
-  _dispose() {}
+  _dispose() {
+  
+    this.make(Explode, {
+      v_pos: this.vs
+    })
+
+  }
 }
 
-class Cursor extends WithPlays {
+class Cursor extends WithRigidPlays {
+
+  v_target = Vec2.unit
+
+  r_opts = {
+    mass: 1000,
+    air_friction: 1,
+    max_speed: 30,
+    max_force: 50
+  }
+
+  r_bs = [[b_arrive_steer(this.v_target), 1]]
 
   get pursue_target() {
-    return this._bh._body.vs
+    return this.vs
   }
 
   _init() {
     let { v_pos } = this.data
-    this.v_target = Vec2.make(100, 100)
-
-    this._bh = steer_behaviours(v_pos, {
-      mass: 1000,
-      air_friction: 1,
-      max_speed: 30,
-      max_force: 50
-    }, [[b_arrive_steer(this.v_target), 1]])
-
-
-    this.make(HollowCircle, {
-      v_pos: v_screen.half,
-      x: 0,
-      y: 0,
-      radius: 400,
-      color: 'yellow'
-    })
   }
 
   _update(dt: number, dt0: number) {
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
     this._bh.update(dt, dt0)
+
+
+    if (this.on_interval(ticks.seconds)) {
+      this.make(HollowCircle, {
+        v_pos: this.vs,
+        x: 0,
+        y: 0,
+        radius: 400,
+        color: 'yellow'
+      })
+    }
   }
 
   _draw() {
-    let { vs } = this._bh._body
+    let { vs } = this
     this.g.queue('lightyellow', true, this.g._fc, 0, vs.x, vs.y, 30, 30, 30)
   }
 
@@ -252,7 +297,19 @@ class HollowCircle extends WithPlays {
   _init() {
   }
 
-  _update(dt: number, dt0: number) {}
+  _update(dt: number, dt0: number) {
+
+    let { v_pos, radius } = this.data
+
+    this.plays.all(Cylinder)
+    .filter(_ => circ_orig(v_pos, radius, _.rect.center))
+    .forEach(_ => _.dispose('hollowcircle'))
+
+
+    if (this.on_interval(ticks.seconds)) {
+      this.dispose()
+    }
+  }
 
   _draw() {
     let { v_pos, x, y, color, radius } = this.data
@@ -262,6 +319,9 @@ class HollowCircle extends WithPlays {
     radius -= 20
     this.g.queue('black', false, this.g._hc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius, radius - 1)
   }
+
+
+  _dispose() {}
 }
 
 class Explode extends WithPlays {
@@ -344,11 +404,13 @@ export default class AllPlays extends Play {
     this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
     this.make(Cylinder, { v_pos: Vec2.make(200, 0) })
 
+    /*
     this.make(Explode, {
       apply: (i_repeat) => ({
         v_pos: rnd_vec().scale((i_repeat % 10) * 200)
       })
     }, ticks.sixth, 0)
+   */
 
   }
 

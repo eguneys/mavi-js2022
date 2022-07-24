@@ -1,16 +1,16 @@
 import { ticks } from './shared'
 import { completed, read, update, tween } from './anim'
-import { Vec2, Rectangle } from './vec2'
+import { Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
-import { steer_behaviours, b_arrive_steer } from './rigid'
+import { steer_behaviours, b_arrive_steer, b_avoid_circle_steer } from './rigid'
 import psfx from './audio'
 
 const rect_orig = (rect: Rectangle, o: Vec2) => {
   return rect.x1 <= o.x && o.x <= rect.x2 && rect.y1 <= o.y && o.y <= rect.y2
 }
 
-const circ_orig = (o: Vec2, r: number, v: Vec2) => {
-  return o.distance(v) <= r
+const circ_orig = (c: Circle, v: Vec2) => {
+  return c.o.distance(v) <= c.r
 }
 
 /* https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript */
@@ -112,7 +112,7 @@ abstract class WithPlays extends Play {
   }
 
 
-  dispose(reason: string) {
+  dispose(reason: any) {
     let { group } = this.data
     if (group) {
       arr_remove(group, this)
@@ -127,12 +127,37 @@ abstract class WithPlays extends Play {
 
 abstract class WithRigidPlays extends WithPlays {
 
-  abstract r_opts: RigidOptions;
-  abstract r_bs: Array<Behaviour>;
-  abstract r_wh: Vec2;
+  readonly v_target = Vec2.unit
+
+  readonly r_opts: RigidOptions = {
+    mass: 1000,
+    air_friction: 0.9,
+    max_speed: 100,
+    max_force: 3
+  };
+  readonly r_bs: Array<Behaviour> = [];
+
+  r_wh!: Vec2;
+
+  get side() {
+    return this._bh._body.side
+  }
 
   get vs() {
     return this._bh._body.vs
+  }
+
+  get x() {
+    return this.vs.x
+  }
+
+  get y() {
+    return this.vs.y
+  }
+
+  get radius() {
+    let { r_wh } = this
+    return Math.max(r_wh.x, r_wh.y)
   }
 
   get rect() {
@@ -140,18 +165,55 @@ abstract class WithRigidPlays extends WithPlays {
     return Rectangle.make(vs.x, vs.y, r_wh.x, r_wh.y)
   }
 
+  get circle() {
+    return Circle.make(this.v_target.x, this.v_target.y, this.radius)
+  }
+
   init() {
 
-    let { v_pos } = this.data
-    this._bh = steer_behaviours(v_pos, this.r_opts, this.r_bs)
+    let { v_pos, wh, radius } = this.data
+    this.v_target.set_in(v_pos.x, v_pos.y)
+    this.r_wh = wh || (radius && Vec2.make(radius, radius)) || this.r_wh
+    this._bh = steer_behaviours(this.v_target, this.r_opts, this.r_bs)
 
     super.init()
   }
+
+
+  update(dt: number, dt0: number) {
+    this._bh.update(dt, dt0)
+    super.update(dt, dt0)
+  }
+}
+
+class CylinderInCircle extends WithRigidPlays {
+
+  r_opts = {
+    mass: 1000,
+    air_friction: 0.9,
+    max_speed: 100,
+    max_force: 4
+  }
+  r_bs = [[b_avoid_circle_steer(this.v_circle), 1]]
+  r_wh = Vec2.make(40, 80)
+
+  _init() {
+  }
+
+  _update(dt: number, dt0: number) {
+  }
+
+  _draw() {
+    let { vs, side } = this
+    this.g.queue('red', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
+  }
+
+  _dispose() {
+  }
+
 }
 
 class Cylinder extends WithRigidPlays {
-
-  v_target = Vec2.unit
 
   r_opts = {
     mass: 1000,
@@ -165,7 +227,6 @@ class Cylinder extends WithRigidPlays {
 
   _init() {
 
-
     let { v_pos } = this.data
     this._cursor = this.plays.one(Cursor)
   }
@@ -173,21 +234,20 @@ class Cylinder extends WithRigidPlays {
   _update(dt: number, dt0: number) {
     let { x, y } = this._cursor.pursue_target
     this.v_target.set_in(x, y)
-    this._bh.update(dt, dt0)
   }
 
   _draw() {
-    let { vs, side } = this._bh._body
+    let { vs, side } = this
     this.g.queue('darkred', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
   }
 
 
-  _dispose() {
-  
-    this.make(Explode, {
+  _dispose(reason: any) {
+    this.make(CylinderInCircle, {
+      circle: reason,
+      cylinder: this,
       v_pos: this.vs
     })
-
   }
 }
 
@@ -214,14 +274,10 @@ class Cursor extends WithRigidPlays {
 
   _update(dt: number, dt0: number) {
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
-    this._bh.update(dt, dt0)
-
 
     if (this.on_interval(ticks.seconds)) {
       this.make(HollowCircle, {
         v_pos: this.vs,
-        x: 0,
-        y: 0,
         radius: 400,
         color: 'yellow'
       })
@@ -293,17 +349,16 @@ class VanishCircle extends WithPlays {
   }
 }
 
-class HollowCircle extends WithPlays {
+class HollowCircle extends WithRigidPlays {
+
   _init() {
   }
 
   _update(dt: number, dt0: number) {
 
-    let { v_pos, radius } = this.data
-
     this.plays.all(Cylinder)
-    .filter(_ => circ_orig(v_pos, radius, _.rect.center))
-    .forEach(_ => _.dispose('hollowcircle'))
+    .filter(_ => console.log(this.circle.o) || circ_orig(this.circle, _.rect.center))
+    .forEach(_ => _.dispose(this))
 
 
     if (this.on_interval(ticks.seconds)) {
@@ -312,12 +367,13 @@ class HollowCircle extends WithPlays {
   }
 
   _draw() {
-    let { v_pos, x, y, color, radius } = this.data
-    this.g.queue(color, false, this.g._hc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius, radius - 10)
+    let { color } = this.data
+    let { x, y, radius } = this
+    this.g.queue(color, false, this.g._hc, 0, x, y, radius, radius, radius, radius - 10)
     radius += 10
-    this.g.queue('black', false, this.g._hc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius, radius - 1)
+    this.g.queue('black', false, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
     radius -= 20
-    this.g.queue('black', false, this.g._hc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius, radius - 1)
+    this.g.queue('black', false, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
   }
 
 

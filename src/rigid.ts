@@ -1,4 +1,4 @@
-import { Vec2, Matrix } from './vec2'
+import { Circle, Vec2, Matrix } from './vec2'
 
 export type Rigid = {
   mass: number,
@@ -221,8 +221,17 @@ export function make_wander(vs: Vec2, opts: RigidOptions) {
   }
 }
 
+export const b_avoid_circle_steer = target =>
+(_body) => avoid_circle_steer(_body.vs, target, _body.max_speed)
+
 export const b_arrive_steer = target => 
 (_body) => arrive_steer(_body.vs, target, _body.max_speed, 100)
+
+function avoid_circle_steer(position: Vec2, target: Circle, max_speed: number) {
+
+
+  return Vec2.zero
+}
 
 function arrive_steer(position: Vec2, target: Vec2, max_speed: number, slowing_distance: number) {
   let target_offset = target.sub(position)

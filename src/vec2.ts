@@ -336,6 +336,17 @@ export class Matrix {
 
 }
 
+export class Circle {
+
+  static make = (x: number, y: number, r: number) => new Circle(Vec2.make(x, y), r)
+
+  static get unit() { return Circle.make(0, 0, 1) }
+
+  scale(n: number) { return Circle.make(this.o.clone, this.r * n) }
+
+  constructor(readonly o: Vec2, readonly r: number) {}
+}
+
 export class Rectangle {
 
   static make = (x: number, y: number,

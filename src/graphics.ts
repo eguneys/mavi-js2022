@@ -11,10 +11,21 @@ export default class Graphics {
     this.ctx.clearRect(0, 0, this.width, this.height)
   }
 
+  _hr = (x: number, y: number, w: number, h: number, in_w: number) => {
+    this.ctx.lineWidth = w - in_w
+    this.ctx.strokeRect(x, y, w, h)
+  }
+
   _fr = (x: number, y: number, w: number, h: number) => {
     this.ctx.fillRect(x, y, w, h)
   }
 
+  _hc = (x: number, y: number, w: number, h: number, r: number, in_r: number) => {
+    this.ctx.lineWidth = (r - in_r) * 2
+    this.ctx.beginPath()
+    this.ctx.arc(x, y, r, 0, 2 * Math.PI, false)
+    this.ctx.stroke()
+  }
 
   _fc = (x: number, y: number, w: number, h: number, r: number) => {
     this.ctx.beginPath()
@@ -46,6 +57,7 @@ export default class Graphics {
 
     let off = 8
     this.ctx.fillStyle = 'black'
+    this.ctx.strokeStyle = 'black'
     Object.keys(this._squeues).map(color => {
       let _queue = this._squeues[color]
       _queue.forEach(_ => {
@@ -60,6 +72,7 @@ export default class Graphics {
     Object.keys(this._squeues).map(color => {
 
       this.ctx.fillStyle = color
+      this.ctx.strokeStyle = color
 
       let _queue = this._squeues[color]
       _queue.forEach(_ => draw_ctx(this.ctx, ..._))
@@ -69,6 +82,7 @@ export default class Graphics {
     Object.keys(this._queues).map(color => {
 
       this.ctx.fillStyle = color
+      this.ctx.strokeStyle = color
 
       let _queue = this._queues[color]
       _queue.forEach(_ => draw_ctx(this.ctx, ..._))

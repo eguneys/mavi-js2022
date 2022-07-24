@@ -3,6 +3,7 @@ import { completed, read, update, tween } from './anim'
 import { Vec2 } from './vec2'
 import { make_sticky_pos } from './make_sticky'
 import { steer_behaviours, b_arrive_steer } from './rigid'
+import psfx from './audio'
 
 /* https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript */
 const make_random = (seed = 1) => {
@@ -166,6 +167,15 @@ class Cursor extends WithPlays {
       max_speed: 30,
       max_force: 50
     }, [[b_arrive_steer(this.v_target), 1]])
+
+
+    this.make(HollowCircle, {
+      v_pos: v_screen.half,
+      x: 0,
+      y: 0,
+      radius: 400,
+      color: 'yellow'
+    })
   }
 
   _update(dt: number, dt0: number) {
@@ -238,6 +248,21 @@ class VanishCircle extends WithPlays {
   }
 }
 
+class HollowCircle extends WithPlays {
+  _init() {
+  }
+
+  _update(dt: number, dt0: number) {}
+
+  _draw() {
+    let { v_pos, x, y, color, radius } = this.data
+    this.g.queue(color, false, this.g._hc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius, radius - 10)
+    radius += 10
+    this.g.queue('black', false, this.g._hc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius, radius - 1)
+    radius -= 20
+    this.g.queue('black', false, this.g._hc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius, radius - 1)
+  }
+}
 
 class Explode extends WithPlays {
 
@@ -277,6 +302,8 @@ class Explode extends WithPlays {
       radius: 30,
       color: 'red'
     }, ticks.sixth * 1.8))
+
+
 
   }
 
@@ -322,10 +349,10 @@ export default class AllPlays extends Play {
         v_pos: rnd_vec().scale((i_repeat % 10) * 200)
       })
     }, ticks.sixth, 0)
+
   }
 
   _update(dt: number, dt0: number) {
-
     let { makes } = this
     this.makes = []
 

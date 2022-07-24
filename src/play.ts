@@ -82,41 +82,14 @@ abstract class Play {
   abstract _draw(): void;
 }
 
+abstract class WithPlays extends Play {
 
-abstract class PlayObjects extends Play {
-
-  init() {
-    this.pre_objects = []
-    this.objects = []
-    this.objects2 = []
-    return super.init()
+  make(...args) {
+    this.plays.make(...args)
   }
-
-  update(dt: number, dt0: number) {
-    this.pre_objects.forEach(_ => _.update(dt, dt0))
-    super.update(dt, dt0)
-    this.objects.forEach(_ => _.update(dt, dt0))
-    this.objects2.forEach(_ => _.update(dt, dt0))
-  }
-
-
-  draw() {
-    this.pre_objects.forEach(_ => _.draw())
-    this.g.flush()
-    super.draw()
-    this.g.flush()
-    this.objects.forEach(_ => _.draw())
-    this.g.flush()
-    this.objects2.forEach(_ => _.draw())
-    this.g.flush()
-  }
-}
-
-abstract class WithPlays extends PlayObjects {
 
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
-
     this.on_dispose = []
   }
 
@@ -150,18 +123,21 @@ class Cylinder extends WithPlays {
 
 
     let { v_pos } = this.data
-    this.v_target = Vec2.make(100, 100)
+    this._cursor = this.plays.one(Cursor)
+
+    this.v_target = this._cursor.pursue_target
 
     this._bh = steer_behaviours(v_pos, {
       mass: 1000,
-      air_friction: 1,
-      max_speed: 30,
-      max_force: 50
+      air_friction: 0.9,
+      max_speed: 100,
+      max_force: 3
     }, [[b_arrive_steer(this.v_target), 1]])
   }
 
   _update(dt: number, dt0: number) {
-    this.v_target.set_in(this.m.pos.x, this.m.pos.y)
+    let { x, y } = this._cursor.pursue_target
+    this.v_target.set_in(x, y)
     this._bh.update(dt, dt0)
   }
 
@@ -176,9 +152,11 @@ class Cylinder extends WithPlays {
 
 class Cursor extends WithPlays {
 
+  get pursue_target() {
+    return this._bh._body.vs
+  }
+
   _init() {
-
-
     let { v_pos } = this.data
     this.v_target = Vec2.make(100, 100)
 
@@ -191,10 +169,7 @@ class Cursor extends WithPlays {
   }
 
   _update(dt: number, dt0: number) {
-
-
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
-
     this._bh.update(dt, dt0)
   }
 
@@ -267,11 +242,38 @@ class VanishCircle extends WithPlays {
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
 
-export default class AllPlays extends PlayObjects {
+export default class AllPlays extends Play {
 
-  _init() {
+
+  all(Ctor: any) {
+    return this.objects.filter(_ => _ instanceof Ctor)
   }
 
-  _update(dt: number, dt0: number) {}
-  _draw() {}
+  one(Ctor: any) {
+    return this.objects.find(_ => _ instanceof Ctor)
+  }
+
+  make(Ctor: any, data: any) {
+    new Ctor(this)._set_data({
+      group: this.objects,
+      ...data
+    }).init()
+  }
+
+  _init() {
+    this.objects = []
+
+    this.make(Cursor, { v_pos: Vec2.make(100, 0) })
+
+    this.make(Cylinder, { v_pos: Vec2.make(0, 0) })
+    this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
+    this.make(Cylinder, { v_pos: Vec2.make(200, 0) })
+  }
+
+  _update(dt: number, dt0: number) {
+    this.objects.forEach(_ => _.update(dt, dt0))
+  }
+  _draw() {
+    this.objects.forEach(_ => _.draw())
+  }
 }

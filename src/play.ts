@@ -92,7 +92,6 @@ abstract class PlayObjects extends Play {
     return super.init()
   }
 
-
   update(dt: number, dt0: number) {
     this.pre_objects.forEach(_ => _.update(dt, dt0))
     super.update(dt, dt0)
@@ -113,27 +112,7 @@ abstract class PlayObjects extends Play {
   }
 }
 
-abstract class PlayMakes extends PlayObjects {
-
-  init() {
-    this.makess = []
-    return super.init()
-  }
-
-  update(dt: number, dt0: number) {
-    let makes = this.makess.shift()
-
-    if (makes) {
-      let [[_make, rest], _pos, _on_dispose] = makes
-      let _rest = rest.map(_ => arr_rnd(_))
-      let res = _make.make(this, this.objects, _pos, ..._rest)
-      res.on_dispose.push(_on_dispose)
-    }
-    super.update(dt, dt0)
-  }
-}
-
-abstract class WithPlays extends PlayMakes {
+abstract class WithPlays extends PlayObjects {
 
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
@@ -167,13 +146,6 @@ abstract class WithPlays extends PlayMakes {
 
 class Cylinder extends WithPlays {
 
-  static make = (base, group, v_pos: Vec2) => {
-    return new Cylinder(base)._set_data({ 
-      group,
-      v_pos
-    }).init()
-  }
-
   _init() {
 
 
@@ -204,13 +176,6 @@ class Cylinder extends WithPlays {
 
 class Cursor extends WithPlays {
 
-  static make = (base, group, v_pos: Vec2) => {
-    return new Cursor(base)._set_data({ 
-      group,
-      v_pos
-    }).init()
-  }
-
   _init() {
 
 
@@ -235,7 +200,7 @@ class Cursor extends WithPlays {
 
   _draw() {
     let { vs } = this._bh._body
-    this.g.queue('lightyellow', true, this.g._fc, vs.x, vs.y, 30)
+    this.g.queue('lightyellow', true, this.g._fc, 0, vs.x, vs.y, 30, 30, 30)
   }
 
 
@@ -243,16 +208,6 @@ class Cursor extends WithPlays {
 }
 
 class VanishDot extends WithPlays {
-
-  static make = (base, group, v_pos: Vec2, x, y, v_dir: Vec2, color) => {
-    return new VanishDot(base)._set_data({ 
-      group,
-      v_pos,
-      v_dir,
-      x,
-      y,
-      color }).init()
-  }
 
   _init() {
     let radius = 300
@@ -283,16 +238,6 @@ class VanishDot extends WithPlays {
 
 class VanishCircle extends WithPlays {
 
-  static make = (base, group, v_pos: Vec2, x, y, radius, color) => {
-    return new VanishCircle(base)._set_data({ 
-      group,
-      v_pos,
-      x,
-      y,
-      radius: radius + 100, 
-      color }).init()
-  }
-
   _init() {
     let { radius } = this.data
     this._rt = tween([0.8, 0.8, 1, 0.2].map(_ => _ * radius), [ticks.five, ticks.three * 2, ticks.three * 2])
@@ -318,214 +263,13 @@ class VanishCircle extends WithPlays {
   }
 }
 
-class MakeSpam extends WithPlays {
-  static make = (base, group, v_pos: Vec2, levels: Levels, delays: Array<number>, poss: Array<Vec2> = []) => {
-    return new MakeSpam(base)._set_data({
-      poss,
-      levels,
-      delays,
-      group,
-      v_pos
-    }).init()
-  }
-
-
-  _init() {
-  const push_level = (levels, poss) => {
-      let level = levels.shift()
-      let pos = poss.shift() || Vec2.zero
-      if (level) {
-        let delay = [DelayDispose, [this.data.delays]]
-        this.makess.push([level, pos, _ => {}])
-        this.makess.push([delay, pos, _ => { push_level(levels, poss) }])
-      } else {
-        this.dispose()
-      }
-    }
-    push_level(this.data.levels, this.data.poss)
-  }
-
-  _update(dt: number, dt0: number) {}
-
-  _draw() {}
-
-  _dispose() {}
-}
-class MakeSeries extends WithPlays {
-  static make = (base, group, v_pos: Vec2, levels: Levels, poss: Array<Vec2> = []) => {
-    return new MakeSeries(base)._set_data({
-      poss,
-      levels,
-      group,
-      v_pos
-    }).init()
-  }
-
-
-  _init() {
-  const push_level = (levels, poss) => {
-      let level = levels.shift()
-      let pos = poss.shift() || Vec2.make(0, 0)
-      if (level) {
-        this.makess.push([level, pos, _ => {
-          push_level(levels, poss)
-        }])
-      } else {
-        this.dispose()
-      }
-    }
-    push_level(this.data.levels, this.data.poss)
-  }
-
-  _update(dt: number, dt0: number) {}
-
-  _draw() {}
-
-  _dispose() {}
-}
-
-class DelayDispose extends WithPlays {
-
-  static make = (base, group, v_pos: Vec2, delay: number) => {
-    return new DelayDispose(base)._set_data({ 
-      delay,
-      group,
-      v_pos
-    }).init()
-  }
-
-  _init() {}
-
-  _update(dt: number, dt0: number) {
-    if (this.on_interval(this.data.delay)) {
-      this.dispose()
-    }
-  }
-
-  _draw() {}
-
-  _dispose() {}
- 
-}
-
-let delay = [DelayDispose, [[ticks.sixth]]]
-
-
-
-class ExCloud extends WithPlays {
-
-  static make = (base, group, v_pos: Vec2) => {
-    return new ExCloud(base)._set_data({ 
-      group,
-      v_pos
-    }).init()
-  }
-
-  _init() {
-    let radiuss = [0, 30, 50]
-    let xs = [0, 10, 20]
-    let ys = [0, 10, 20]
-    let red_vanish_circle = [VanishCircle, [xs, ys, radiuss, ['red']]]
-    let white_vanish_circle = [VanishCircle, [xs, ys, radiuss, ['white']]]
-
-    let spam = [MakeSpam, 
-      [[[white_vanish_circle, red_vanish_circle]], 
-        [[ticks.sixth, ticks.three * 2]], 
-        [[this.data.v_pos, this.data.v_pos]]]]
-    this.makess.push([spam, this.data.v_pos, () => {
-      this.dispose()
-    }])
-
-
-    let red_dot = [VanishDot, [xs, ys, [rnd_vec_h(), rnd_vec_h(), rnd_vec_h()], ['red']]]
-    this.makess.push([red_dot, this.data.v_pos.clone, () => {}])
-  }
-
-  _update(dt: number, dt0: number) {}
-
-  _draw() {}
-
-  _dispose() {}
-
-
-}
-
-
-let excloud = [ExCloud, []]
-
-class Level1 extends WithPlays {
-
-  static make = (base, group, v_pos: Vec2) => {
-    return new Level1(base)._set_data({ 
-      group,
-      v_pos
-    }).init()
-  }
-
-  _init() {
-
-    this.makess.push([delay, Vec2.zero, _ => {
-      this.dispose()
-    }])
-
-    let levels = [...Array(100)].map(_ => excloud)
-    let delays = [ticks.three * 2, ticks.three, ticks.five, ticks.seconds, ticks.half]
-    let poss = [...Array(100)].map(_ => rnd_vec(v_screen).scale(0.8)
-                                  .add(v_screen.scale(0.1)))
-    let makemake = [MakeSpam, [[levels], [delays], [poss]]]
-
-    this.makess.push([makemake, Vec2.zero, _ => {
-      this.dispose()
-    }])
-
-  }
-
-  _update(dt: number, dt0: number) {}
-
-  _draw() {}
-
-  _dispose() {}
-}
-
-
-class Level2 extends WithPlays {
-
-  static make = (base, group, v_pos: Vec2) => {
-    return new Level2(base)._set_data({ 
-      group,
-      v_pos
-    }).init()
-  }
-
-  _init() {
-
-
-    this.makess.push([[Cursor, []], Vec2.unit, () => {}])
-
-    this.makess.push([[Cylinder, []], Vec2.unit, () => {}])
-  }
-
-  _update(dt: number, dt0: number) {}
-
-  _draw() {}
-}
-
-
-let level1 = [Level1, []]
-let level2 = [Level2, []]
-
-let levels = [level1, level2]
-
-let make_levels = [MakeSeries, [[levels]]]
 
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
 
-export default class AllPlays extends PlayMakes {
+export default class AllPlays extends PlayObjects {
 
   _init() {
-
-    this.makess.push([make_levels, Vec2.make(0, 0), _ => {}])
   }
 
   _update(dt: number, dt0: number) {}

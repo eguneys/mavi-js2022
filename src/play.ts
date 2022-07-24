@@ -230,12 +230,33 @@ class VanishCircle extends WithPlays {
   _draw() {
     let { v_pos, x, y, color } = this.data
     let [radius] = read(this._rt)
-    this.g.queue(color, true, this.g._fc, v_pos.x + x, v_pos.y + y, radius)
+    this.g.queue(color, true, this.g._fc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius)
   }
 
 
   _dispose() {
   }
+}
+
+
+class Explode extends WithPlays {
+
+
+  _init() {
+
+    this.make(VanishCircle, {
+      v_pos: v_screen.half,
+      x: 0,
+      y: 0,
+      radius: 100,
+      color: 'red'
+    })
+  }
+
+  _update(dt: number, dt0: number) {}
+
+  _draw() {}
+
 }
 
 
@@ -253,24 +274,54 @@ export default class AllPlays extends Play {
     return this.objects.find(_ => _ instanceof Ctor)
   }
 
-  make(Ctor: any, data: any) {
-    new Ctor(this)._set_data({
-      group: this.objects,
-      ...data
-    }).init()
+  make(Ctor: any, data: any, delay: number = 0, repeat: number = 1) {
+    this.makes.push([Ctor, data, delay, repeat, 0, 0])
   }
 
   _init() {
+
+    this.makes = []
+
     this.objects = []
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
 
-    this.make(Cylinder, { v_pos: Vec2.make(0, 0) })
+    this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 10, 0)
     this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
     this.make(Cylinder, { v_pos: Vec2.make(200, 0) })
+
+    this.make(Explode, {})
   }
 
   _update(dt: number, dt0: number) {
+
+    this.makes = this.makes.filter(_ => {
+
+      _[4] += dt
+
+      let [Ctor, data, _delay, _repeat, _t, _i_repeat] = _
+
+      if (_t >= _delay) {
+        new Ctor(this)._set_data({
+          group: this.objects,
+          ...data,
+          _delay,
+          _repeat,
+          _t,
+          _i_repeat
+        }).init()
+
+        _[4] = 0
+        _[5]++;
+
+        if (_repeat === 0 || _[5] < _repeat) {
+          return true
+        }
+      } else {
+        return true
+      }
+    })
+
     this.objects.forEach(_ => _.update(dt, dt0))
   }
   _draw() {

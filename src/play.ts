@@ -244,13 +244,40 @@ class Explode extends WithPlays {
 
   _init() {
 
+    let { v_pos } = this.data
+
     this.make(VanishCircle, {
-      v_pos: v_screen.half,
+      v_pos,
       x: 0,
       y: 0,
-      radius: 100,
-      color: 'red'
+      radius: 110,
+      color: 'white'
     })
+
+    this.make(VanishCircle, {
+      v_pos,
+      x: 0,
+      y: 0,
+      radius: 90,
+      color: 'red'
+    }, ticks.sixth)
+
+    let v_corners = [
+      Vec2.make(-1, -1),
+      Vec2.make(-1, 1),
+      Vec2.make(1, -1),
+      Vec2.make(1, 1)
+    ].map(_ => _.scale(45))
+
+    v_corners.forEach(v =>
+    this.make(VanishCircle, {
+      v_pos,
+      x: v.x,
+      y: v.y,
+      radius: 30,
+      color: 'red'
+    }, ticks.sixth * 1.8))
+
   }
 
   _update(dt: number, dt0: number) {}
@@ -290,25 +317,33 @@ export default class AllPlays extends Play {
     this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
     this.make(Cylinder, { v_pos: Vec2.make(200, 0) })
 
-    this.make(Explode, {})
+    this.make(Explode, {
+      apply: (i_repeat) => ({
+        v_pos: rnd_vec().scale((i_repeat % 10) * 200)
+      })
+    }, ticks.sixth, 0)
   }
 
   _update(dt: number, dt0: number) {
 
-    this.makes = this.makes.filter(_ => {
+    let { makes } = this
+    this.makes = []
+
+    this.makes = this.makes.concat(makes.filter(_ => {
 
       _[4] += dt
 
-      let [Ctor, data, _delay, _repeat, _t, _i_repeat] = _
+      let [Ctor, f_data, _delay, _repeat, _t, _i_repeat] = _
 
       if (_t >= _delay) {
         new Ctor(this)._set_data({
           group: this.objects,
-          ...data,
-          _delay,
-          _repeat,
-          _t,
-          _i_repeat
+          ...f_data.apply?.(
+            _i_repeat,
+            _t,
+            _repeat,
+            _delay,
+          ) || f_data
         }).init()
 
         _[4] = 0
@@ -320,7 +355,7 @@ export default class AllPlays extends Play {
       } else {
         return true
       }
-    })
+    }))
 
     this.objects.forEach(_ => _.update(dt, dt0))
   }

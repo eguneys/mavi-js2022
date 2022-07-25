@@ -24,12 +24,15 @@ export function make_rigid(x, mass, air_friction, max_speed, max_force) {
   }
 }
 
+
+/* https://github.com/a327ex/SNKRX/blob/master/engine/math/vector.lua#L202 */
 export function truncate(a: number, max: number) {
   let s = (max * max) / (a * a)
   s = (s > 1 && 1) || Math.sqrt(s)
   return a * s
 }
 
+/* https://stackoverflow.com/questions/32709599/the-time-corrected-verlet-numerical-integration-formula */
 export function rigid_update(body: Rigid, dt: number, dt0: number) {
 
   let { air_friction, force, mass, max_speed, max_force } = body
@@ -59,6 +62,7 @@ export type RigidOptions = {
 }
 
 
+/* https://gamedev.stackexchange.com/questions/200784/how-to-move-an-enemy-to-sneak-up-on-the-player-from-behind-using-forces */
 export function rotate_matrix(heading: Vec2, side: Vec2, pos: Vec2) {
   let a = heading.x,
     b = side.x,
@@ -137,6 +141,7 @@ export function rigid_body(vs: Vec2, opts: RigidOptions) {
   }
 }
 
+/* https://github.com/wangchen/Programming-Game-AI-by-Example-src/tree/master/Buckland_Chapter3-Steering%20Behaviors */
 export function steer_behaviours(vs: Vec2, opts: RigidOptions, bs: Array<Behaviour>) {
 
   let _body = rigid_body(vs, opts)
@@ -245,6 +250,7 @@ function arrive_steer(position: Vec2, target: Vec2, max_speed: number, slowing_d
   return desired_velocity
 }
 
+/* https://github.com/a327ex/SNKRX/blob/master/engine/game/steering.lua#L188 */
 function wander_steer(position: Matrix, wander_target: Vec2, jitter: number, r: number, distance: number) {
   wander_target.x += (1 - 2 * Math.random()) * jitter
   wander_target.y += (1 - 2 * Math.random()) * jitter 

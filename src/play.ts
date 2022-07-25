@@ -82,8 +82,14 @@ abstract class Play {
     this._draw()
   }
 
+  /* https://github.com/eguneys/monocle-engine/blob/master/Monocle/Scene.cs#L122 */
   on_interval(t: number) {
     return Math.floor(this.life0 / t) !== Math.floor(this.life / t)
+  }
+
+  /* https://github.com/eguneys/monocle-engine/blob/master/Monocle/Util/Calc.cs#L944 */
+  between_interval(i: number) {
+    return this.life % (i * 2) > i
   }
 
   abstract _init(): void;
@@ -253,8 +259,6 @@ class Cylinder extends WithRigidPlays {
 
 class Cursor extends WithRigidPlays {
 
-  v_target = Vec2.unit
-
   r_opts = {
     mass: 1000,
     air_friction: 1,
@@ -273,6 +277,7 @@ class Cursor extends WithRigidPlays {
   }
 
   _update(dt: number, dt0: number) {
+
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
     if (this.on_interval(ticks.seconds)) {
@@ -357,7 +362,7 @@ class HollowCircle extends WithRigidPlays {
   _update(dt: number, dt0: number) {
 
     this.plays.all(Cylinder)
-    .filter(_ => console.log(this.circle.o) || circ_orig(this.circle, _.rect.center))
+    .filter(_ => circ_orig(this.circle, _.rect.center))
     .forEach(_ => _.dispose(this))
 
 

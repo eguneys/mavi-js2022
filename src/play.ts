@@ -47,6 +47,10 @@ function rnd_h(rng: RNG = random) {
   return rng() * 2 - 1
 }
 
+function rnd_int_h(max: number, rng: RNG = random) {
+  return rnd_h(rng) * max
+}
+
 function rnd_int(max: number, rng: RNG = random) {
   return Math.floor(rng() * max)
 }
@@ -389,12 +393,12 @@ class VanishDot extends WithRigidPlays {
   r_wh = Vec2.make(40, 80)
 
   _init() {
-    let radius = 60
+    let radius = 30
     this._th = tween([0.8, 0.2].map(_ => _ * radius), [arr_rnd([ticks.sixth * 2, ticks.five * 2])])
 
-    let { v_pos } = this.data
+    let { v_pos, x, y } = this.data
 
-    this.v_flee.set_in(v_pos.x, v_pos.y)
+    this.v_flee.set_in(v_pos.x + x, v_pos.y + y)
   }
 
   _update(dt: number, dt0: number) {
@@ -527,12 +531,14 @@ class Explode extends WithPlays {
     }, ticks.sixth * 1.8))
 
     this.make(VanishDot, {
-      v_pos,
-      x: 0,
-      y: 0,
-      radius: 20,
-      color: 'red'
-    }, ticks.sixth * 2, -10)
+      apply: () => ({
+        v_pos,
+        x: rnd_int_h(6),
+        y: rnd_int_h(10),
+        radius: 6 + rnd_int(15),
+        color: 'red'
+      })
+    }, ticks.sixth, -10)
 
   }
 

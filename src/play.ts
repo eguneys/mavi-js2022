@@ -5,6 +5,9 @@ import { make_sticky_pos } from './make_sticky'
 import { steer_behaviours, b_arrive_steer, b_avoid_circle_steer } from './rigid'
 import psfx from './audio'
 
+const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
+tween([start, start, 1, end].map(_ => _ * radius), [ticks.five + ticks.three, ticks.three * 2, ticks.three * 2])
+
 const rect_orig = (rect: Rectangle, o: Vec2) => {
   return rect.x1 <= o.x && o.x <= rect.x2 && rect.y1 <= o.y && o.y <= rect.y2
 }
@@ -97,7 +100,56 @@ abstract class Play {
   abstract _draw(): void;
 }
 
-abstract class WithPlays extends Play {
+abstract class PlayMakes extends Play {
+
+  make(Ctor: any, data: any, delay: number = 0, repeat: number = 1) {
+    this.makes.push([Ctor, data, delay, repeat, 0, 0])
+  }
+
+
+  init() {
+    this.makes = []
+    return super.init()
+  }
+
+  update(dt: number, dt0: number) {
+    let { makes } = this
+    this.makes = []
+
+    this.makes = this.makes.concat(makes.filter(_ => {
+
+      _[4] += dt
+
+      let [Ctor, f_data, _delay, _repeat, _t, _i_repeat] = _
+
+      if (_t >= _delay) {
+        new Ctor(this)._set_data({
+          group: this.objects,
+          ...f_data.apply?.(
+            _i_repeat,
+            _t,
+            _repeat,
+            _delay,
+          ) || f_data
+        }).init()
+
+        _[4] = 0
+        _[5]++;
+
+        if (_repeat === 0 || _[5] < _repeat) {
+          return true
+        }
+      } else {
+        return true
+      }
+    }))
+
+    super.update(dt, dt0)
+  }
+
+}
+
+abstract class WithPlays extends PlayMakes {
 
   make(...args) {
     this.plays.make(...args)
@@ -204,6 +256,7 @@ class CylinderInCircle extends WithRigidPlays {
   r_wh = Vec2.make(40, 80)
 
   _init() {
+    this.make(Explode, { v_pos: this.vs }, ticks.seconds, 0)
   }
 
   _update(dt: number, dt0: number) {
@@ -331,7 +384,7 @@ class VanishCircle extends WithPlays {
 
   _init() {
     let { radius } = this.data
-    this._rt = tween([0.8, 0.8, 1, 0.2].map(_ => _ * radius), [ticks.five, ticks.three * 2, ticks.three * 2])
+    this._rt = quick_burst(radius, 0.96)
 
   }
 
@@ -354,8 +407,6 @@ class VanishCircle extends WithPlays {
   }
 }
 
-const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
-tween([start, start, 1, end].map(_ => _ * radius), [ticks.five + ticks.three, ticks.three * 2, ticks.three * 2])
 
 class HollowCircle extends WithRigidPlays {
 
@@ -451,8 +502,7 @@ class Explode extends WithPlays {
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
 
-export default class AllPlays extends Play {
-
+export default class AllPlays extends PlayMakes {
 
   all(Ctor: any) {
     return this.objects.filter(_ => _ instanceof Ctor)
@@ -462,14 +512,7 @@ export default class AllPlays extends Play {
     return this.objects.find(_ => _ instanceof Ctor)
   }
 
-  make(Ctor: any, data: any, delay: number = 0, repeat: number = 1) {
-    this.makes.push([Ctor, data, delay, repeat, 0, 0])
-  }
-
   _init() {
-
-    this.makes = []
-
     this.objects = []
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
@@ -489,37 +532,6 @@ export default class AllPlays extends Play {
   }
 
   _update(dt: number, dt0: number) {
-    let { makes } = this
-    this.makes = []
-
-    this.makes = this.makes.concat(makes.filter(_ => {
-
-      _[4] += dt
-
-      let [Ctor, f_data, _delay, _repeat, _t, _i_repeat] = _
-
-      if (_t >= _delay) {
-        new Ctor(this)._set_data({
-          group: this.objects,
-          ...f_data.apply?.(
-            _i_repeat,
-            _t,
-            _repeat,
-            _delay,
-          ) || f_data
-        }).init()
-
-        _[4] = 0
-        _[5]++;
-
-        if (_repeat === 0 || _[5] < _repeat) {
-          return true
-        }
-      } else {
-        return true
-      }
-    }))
-
     this.objects.forEach(_ => _.update(dt, dt0))
   }
   _draw() {

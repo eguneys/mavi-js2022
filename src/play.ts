@@ -2,7 +2,11 @@ import { ticks } from './shared'
 import { ti, completed, read, update, tween } from './anim'
 import { Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
-import { steer_behaviours, b_arrive_steer, b_avoid_circle_steer } from './rigid'
+import { 
+  steer_behaviours, 
+  b_arrive_steer, 
+  b_avoid_circle_steer, 
+  b_flee_steer } from './rigid'
 import psfx from './audio'
 
 const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
@@ -26,6 +30,10 @@ const make_random = (seed = 1) => {
 const random = make_random()
 
 let v_screen = Vec2.make(1920, 1080)
+
+function rnd_angle(rng: RNG = random) {
+  return rng() * Math.PI * 2
+}
 
 function rnd_vec_h(rng: RNG = random) {
   return Vec2.make(rnd_h(rng), rnd_h(rng))
@@ -120,21 +128,26 @@ abstract class PlayMakes extends Play {
 
       _[4] += dt
 
-      let [Ctor, f_data, _delay, _repeat, _t, _i_repeat] = _
+      let [Ctor, f_data, _delay, _s_repeat, _t, _i_repeat] = _
+
+      let _at_once = _s_repeat < 0
+      let _repeat = Math.abs(_s_repeat)
 
       if (_t >= _delay) {
-        new Ctor(this)._set_data({
-          group: this.objects,
-          ...f_data.apply?.(
-            _i_repeat,
-            _t,
-            _repeat,
-            _delay,
-          ) || f_data
-        }).init()
+        
+        do {
+          new Ctor(this)._set_data({
+            group: this.objects,
+            ...f_data.apply?.(
+              _[5],
+              _[4],
+              _repeat,
+              _delay,
+            ) || f_data
+          }).init()
+        } while(++_[5] < _repeat && _at_once)
 
         _[4] = 0
-        _[5]++;
 
         if (_repeat === 0 || _[5] < _repeat) {
           return true
@@ -197,6 +210,10 @@ abstract class WithRigidPlays extends WithPlays {
 
   r_wh!: Vec2;
 
+  get angle() {
+    return this.side.angle
+  }
+
   get side() {
     return this._bh._body.side
   }
@@ -211,6 +228,14 @@ abstract class WithRigidPlays extends WithPlays {
 
   get y() {
     return this.vs.y
+  }
+
+  get w() {
+    return this.r_wh.x
+  }
+
+  get h() {
+    return this.r_wh.y
   }
 
   get radius() {
@@ -256,7 +281,7 @@ class CylinderInCircle extends WithRigidPlays {
   r_wh = Vec2.make(40, 80)
 
   _init() {
-    this.make(Explode, { v_pos: this.vs }, ticks.seconds, 0)
+    this.make(Explode, { v_pos: this.vs })
   }
 
   _update(dt: number, dt0: number) {
@@ -351,28 +376,42 @@ class Cursor extends WithRigidPlays {
   _dispose() {}
 }
 
-class VanishDot extends WithPlays {
+class VanishDot extends WithRigidPlays {
+
+  v_flee = Vec2.unit
+  r_opts = {
+    mass: 400,
+    air_friction: 0.8,
+    max_speed: 100,
+    max_force: 30 
+  }
+  r_bs = [[b_flee_steer(this.v_flee, rnd_angle()), 1]]
+  r_wh = Vec2.make(40, 80)
 
   _init() {
-    let radius = 300
-    this._rt = tween([0, 1].map(_ => _ * radius), [arr_rnd([ticks.three * 2, ticks.five * 2])])
+    let radius = 60
+    this._th = tween([0.8, 0.2].map(_ => _ * radius), [arr_rnd([ticks.sixth * 2, ticks.five * 2])])
+
+    let { v_pos } = this.data
+
+    this.v_flee.set_in(v_pos.x, v_pos.y)
   }
 
   _update(dt: number, dt0: number) {
-    update(this._rt, dt, dt0)
+    update(this._th, dt, dt0)
 
-    let { v_pos, v_dir } = this.data
-    let [radius] = read(this._rt)
-    v_pos.add_in(v_dir.scale((300 - radius) * 0.5))
-
-    if (completed(this._rt)) {
+    if (completed(this._th)) {
       this.dispose()
     }
   }
 
   _draw() {
-    let { v_pos, x, y, color } = this.data
-    this.g.queue(color, true, this.g._fc, v_pos.x + x + x, v_pos.y + y, 30)
+
+    let { color } = this.data
+    let { w, vs } = this
+    let [h] = read(this._th)
+
+    this.g.queue(color, true, this.g._frr, this.angle, vs.x, vs.y, w, h, w/4)
   }
 
 
@@ -421,7 +460,6 @@ class HollowCircle extends WithRigidPlays {
     .filter(_ => circ_orig(this.circle, _.rect.center))
     .forEach(_ => _.dispose(this))
 
-
     if (this.on_interval(ticks.seconds)) {
       this.dispose()
     }
@@ -455,7 +493,6 @@ class Explode extends WithPlays {
   _init() {
 
     let { v_pos } = this.data
-
     this.make(VanishCircle, {
       v_pos,
       x: 0,
@@ -471,6 +508,7 @@ class Explode extends WithPlays {
       radius: 90,
       color: 'red'
     }, ticks.sixth)
+
 
     let v_corners = [
       Vec2.make(-1, -1),
@@ -488,7 +526,13 @@ class Explode extends WithPlays {
       color: 'red'
     }, ticks.sixth * 1.8))
 
-
+    this.make(VanishDot, {
+      v_pos,
+      x: 0,
+      y: 0,
+      radius: 20,
+      color: 'red'
+    }, ticks.sixth * 2, -10)
 
   }
 
@@ -517,18 +561,17 @@ export default class AllPlays extends PlayMakes {
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
 
-    this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 10, 0)
+    this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
     this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
-    this.make(Cylinder, { v_pos: Vec2.make(200, 0) })
+    //this.make(Cylinder, { v_pos: Vec2.make(200, 0) })
 
     /*
     this.make(Explode, {
       apply: (i_repeat) => ({
-        v_pos: rnd_vec().scale((i_repeat % 10) * 200)
+        v_pos: rnd_vec().scale(((i_repeat % 10) + 3) * 100)
       })
-    }, ticks.sixth, 0)
+    }, ticks.seconds, 10)
    */
-
   }
 
   _update(dt: number, dt0: number) {

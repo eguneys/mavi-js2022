@@ -1,3 +1,4 @@
+/* http://www.red3d.com/cwr/steer/gdc99/ */
 import { Circle, Vec2, Matrix } from './vec2'
 
 export type Rigid = {
@@ -226,8 +227,12 @@ export function make_wander(vs: Vec2, opts: RigidOptions) {
   }
 }
 
+
 export const b_avoid_circle_steer = target =>
 (_body) => avoid_circle_steer(_body.vs, target, _body.max_speed)
+
+export const b_flee_steer = (target, zero_angle) =>
+(_body) => flee_steer(_body.vs, target, _body.max_speed, zero_angle, 100)
 
 export const b_arrive_steer = target => 
 (_body) => arrive_steer(_body.vs, target, _body.max_speed, 100)
@@ -236,6 +241,20 @@ function avoid_circle_steer(position: Vec2, target: Circle, max_speed: number) {
 
 
   return Vec2.zero
+}
+
+
+function flee_steer(position: Vec2, target: Vec2, max_speed: number, zero_angle: number, slowing_distance: number) {
+  let target_offset = position.sub(target)
+  let distance = target_offset.length
+  if (distance > slowing_distance) {
+    return Vec2.zero
+  }
+
+  if (target_offset.length === 0) {
+    target_offset = target_offset.add_angle(zero_angle)
+  }
+  return target_offset.normalize.scale(max_speed)
 }
 
 function arrive_steer(position: Vec2, target: Vec2, max_speed: number, slowing_distance: number) {

@@ -1,5 +1,9 @@
 /* https://gist.github.com/eguneys/8ca56803e01fadb28a2045931f83293d */
 
+export function ti(t: Tween) {
+  return t[0]()[2]
+}
+
 export function completed(t: Tween) {
   return t[0]()[1]
 }
@@ -18,12 +22,13 @@ export function tween(values: Array<number>, durations: Array<number>) {
   let _value = values[0],
   _completed = false
 
-  function _read_value() {
-    return [_value, _completed]
-  }
-
   let _i = 0
   let _t = 0
+
+  function _read_value() {
+    return [_value, _completed, _i]
+  }
+
   function _update(dt: number, dt0: number) {
 
     if (_completed) {

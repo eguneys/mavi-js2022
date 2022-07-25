@@ -1,5 +1,5 @@
 import { ticks } from './shared'
-import { completed, read, update, tween } from './anim'
+import { ti, completed, read, update, tween } from './anim'
 import { Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
 import { steer_behaviours, b_arrive_steer, b_avoid_circle_steer } from './rigid'
@@ -354,12 +354,17 @@ class VanishCircle extends WithPlays {
   }
 }
 
+const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
+tween([start, start, 1, end].map(_ => _ * radius), [ticks.five + ticks.three, ticks.three * 2, ticks.three * 2])
+
 class HollowCircle extends WithRigidPlays {
 
   _init() {
+    this._rt = quick_burst(6, 1.2, 0.8)
   }
 
   _update(dt: number, dt0: number) {
+    update(this._rt, dt, dt0)
 
     this.plays.all(Cylinder)
     .filter(_ => circ_orig(this.circle, _.rect.center))
@@ -374,11 +379,19 @@ class HollowCircle extends WithRigidPlays {
   _draw() {
     let { color } = this.data
     let { x, y, radius } = this
-    this.g.queue(color, false, this.g._hc, 0, x, y, radius, radius, radius, radius - 10)
-    radius += 10
-    this.g.queue('black', false, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
-    radius -= 20
-    this.g.queue('black', false, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
+    let [_bradius, _, i] = read(this._rt)
+    if (i <= 1) {
+      let __bradius = _bradius * 1.8
+      this.g.queue('white', false, this.g._hc, 0, x, y, radius, radius, radius, radius - __bradius)
+    } else {
+      this.g.queue(color, i > 2, this.g._hc, 0, x, y, radius, radius, radius, radius - _bradius)
+    }
+    /*
+    radius += 6
+    this.g.queue('black', 0, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
+    radius -= 12
+    this.g.queue('black', 0, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
+   */
   }
 
 

@@ -134,7 +134,7 @@ export function rigid_body(vs: Vec2, opts: RigidOptions) {
       return this.heading.perpendicular
     },
     get matrix() {
-      rotate_matrix(this.heading, this.side, this.pos)
+      return rotate_matrix(this.heading, this.side, this.pos)
     },
     get max_speed() {
       return opts.max_speed
@@ -228,6 +228,14 @@ export function make_wander(vs: Vec2, opts: RigidOptions) {
 }
 
 
+export const b_wander_steer = (jitter: number, r: number, distance: number) => {
+  let v_wander = Vec2.unit
+  return (_body) => wander_steer(_body.matrix, v_wander, jitter, r, distance)
+}
+
+export const b_separation_steer = group =>
+(_body) => separation_steer(_body.vs, group, _body.max_speed)
+
 export const b_avoid_circle_steer = target =>
 (_body) => avoid_circle_steer(_body.vs, target, _body.max_speed)
 
@@ -237,10 +245,22 @@ export const b_flee_steer = (target, zero_angle) =>
 export const b_arrive_steer = target => 
 (_body) => arrive_steer(_body.vs, target, _body.max_speed, 100)
 
+
+function separation_steer(position: Vec2, group: Array<Vec2>, max_speed: number) {
+  let res = Vec2.zero
+  group.forEach(neighbour => {
+    let toAgent = position.sub(neighbour)
+
+    res.add_in(toAgent.normalize.scale(1/(toAgent.length||0.1)))
+  })
+
+  return res.scale(max_speed * 15)
+}
+
+
 function avoid_circle_steer(position: Vec2, target: Circle, max_speed: number, zero_angle: number) {
   return flee_steer(position, target.o, max_speed, zero_angle, target.r * 1.2)
 }
-
 
 function flee_steer(position: Vec2, target: Vec2, max_speed: number, zero_angle: number, slowing_distance: number) {
   let target_offset = position.sub(target)

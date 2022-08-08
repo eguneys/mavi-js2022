@@ -4,6 +4,8 @@ import { Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
 import { 
   steer_behaviours, 
+  b_wander_steer,
+  b_separation_steer,
   b_arrive_steer, 
   b_avoid_circle_steer, 
   b_flee_steer } from './rigid'
@@ -276,22 +278,39 @@ abstract class WithRigidPlays extends WithPlays {
 
 class CylinderInCircle extends WithRigidPlays {
 
+  v_group = []
   v_circle = Circle.unit
   r_opts = {
-    mass: 1000,
-    air_friction: 0.9,
-    max_speed: 100,
-    max_force: 4
+    mass: 200,
+    air_friction: 1.08,
+    max_speed: 8,
+    max_force: 1
   }
-  r_bs = [[b_avoid_circle_steer(this.v_circle, rnd_angle()), 1]]
+  r_bs = [
+    [b_wander_steer(40, 500, 200), 0.2],
+    [b_avoid_circle_steer(this.v_circle, rnd_angle()), 0.3], 
+    [b_separation_steer(this.v_group), 0.3], 
+    [b_arrive_steer(this.v_target), 0.2]]
   r_wh = Vec2.make(40, 80)
 
   _init() {
-    //this.make(Explode, { v_pos: this.vs })
+
+    let self = this
+    this._cursor = this.plays.one(Cursor)
+    this.make(Explode, { apply: () => ({
+      v_pos: self.vs,
+      destroy: self
+    }) }, ticks.seconds * 2)
     this.v_circle.copy_in(this.data.circle.circle)
   }
 
   _update(dt: number, dt0: number) {
+    let { x, y } = this._cursor.pursue_target
+    this.v_target.set_in(x, y)
+
+    this.v_group.length = 0
+
+    this.plays.all(CylinderInCircle).forEach(_ => this !== _ && circ_orig(this.circle.scale(8), _.vs) && this.v_group.push(_.vs))
   }
 
   _draw() {
@@ -306,18 +325,22 @@ class CylinderInCircle extends WithRigidPlays {
 
 class Cylinder extends WithRigidPlays {
 
+  v_group = []
   r_opts = {
     mass: 1000,
     air_friction: 0.9,
     max_speed: 100,
-    max_force: 3
+    max_force: 5
   }
-  r_bs = [[b_arrive_steer(this.v_target), 1]]
+  r_bs = [
+    [b_separation_steer(this.v_group), 0.5], 
+    [b_arrive_steer(this.v_target), 0.45],
+  [b_wander_steer(10, 500, 400), 0.05]
+  ]
   r_wh = Vec2.make(40, 80)
 
 
   _init() {
-
     let { v_pos } = this.data
     this._cursor = this.plays.one(Cursor)
   }
@@ -325,6 +348,10 @@ class Cylinder extends WithRigidPlays {
   _update(dt: number, dt0: number) {
     let { x, y } = this._cursor.pursue_target
     this.v_target.set_in(x, y)
+
+    this.v_group.length = 0
+
+    this.plays.all(Cylinder).forEach(_ => this !== _ && circ_orig(this.circle.scale(8), _.vs) && this.v_group.push(_.vs))
   }
 
   _draw() {
@@ -365,7 +392,7 @@ class Cursor extends WithRigidPlays {
 
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
-    if (this.on_interval(ticks.seconds)) {
+    if (this.on_interval(ticks.seconds * 3)) {
       this.make(HollowCircle, {
         v_pos: this.vs,
         radius: 400,
@@ -500,6 +527,11 @@ class Explode extends WithPlays {
   _init() {
 
     let { v_pos } = this.data
+
+    let { destroy } = this.data
+
+    destroy.dispose()
+
     this.make(VanishCircle, {
       v_pos,
       x: 0,
@@ -575,13 +607,21 @@ export default class AllPlays extends PlayMakes {
     this.make(Cylinder, { apply: (i_repeat) => ({
       v_pos: arr_rnd(r_screen.vertices)
     })
-    }, ticks.seconds * 4, 0)
+    }, ticks.seconds * 2, 1)
     this.make(Cylinder, { apply: (i_repeat) => ({
       v_pos: arr_rnd(r_screen.vertices)
     })
-    }, ticks.seconds * 4, 0)
+    }, ticks.seconds * 3, 0)
 
+    this.make(Cylinder, { apply: (i_repeat) => ({
+      v_pos: arr_rnd(r_screen.vertices)
+    })
+    }, ticks.seconds * 1, 0)
 
+    this.make(Cylinder, { apply: (i_repeat) => ({
+      v_pos: arr_rnd(r_screen.vertices)
+    })
+    }, ticks.seconds * 1, 0)
 
     /*
     this.make(Explode, {

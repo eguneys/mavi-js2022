@@ -344,11 +344,17 @@ export class Circle {
 
   static get unit() { return Circle.make(0, 0, 1) }
 
-  scale(n: number) { return Circle.make(this.o.clone, this.r * n) }
+  scale(n: number) { return Circle.make(this.o.x, this.o.y, this.r * n) }
 
   copy_in(circle: Circle) {  
     this.r = circle.r 
     this.o = circle.o 
+    return this
+  }
+
+  add_o_in(v: Vec2) {
+    this.o.add_in(v)
+    return this
   }
 
   constructor(o: Vec2, r: number) {

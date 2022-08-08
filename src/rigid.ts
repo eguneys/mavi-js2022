@@ -237,10 +237,8 @@ export const b_flee_steer = (target, zero_angle) =>
 export const b_arrive_steer = target => 
 (_body) => arrive_steer(_body.vs, target, _body.max_speed, 100)
 
-function avoid_circle_steer(position: Vec2, target: Circle, max_speed: number) {
-
-
-  return Vec2.zero
+function avoid_circle_steer(position: Vec2, target: Circle, max_speed: number, zero_angle: number) {
+  return flee_steer(position, target.o, max_speed, zero_angle, target.r * 1.2)
 }
 
 

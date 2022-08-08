@@ -30,6 +30,7 @@ const make_random = (seed = 1) => {
 const random = make_random()
 
 let v_screen = Vec2.make(1920, 1080)
+let r_screen = Rectangle.make(0, 0, 1920, 1080)
 
 function rnd_angle(rng: RNG = random) {
   return rng() * Math.PI * 2
@@ -275,17 +276,19 @@ abstract class WithRigidPlays extends WithPlays {
 
 class CylinderInCircle extends WithRigidPlays {
 
+  v_circle = Circle.unit
   r_opts = {
     mass: 1000,
     air_friction: 0.9,
     max_speed: 100,
     max_force: 4
   }
-  r_bs = [[b_avoid_circle_steer(this.v_circle), 1]]
+  r_bs = [[b_avoid_circle_steer(this.v_circle, rnd_angle()), 1]]
   r_wh = Vec2.make(40, 80)
 
   _init() {
-    this.make(Explode, { v_pos: this.vs })
+    //this.make(Explode, { v_pos: this.vs })
+    this.v_circle.copy_in(this.data.circle.circle)
   }
 
   _update(dt: number, dt0: number) {
@@ -567,9 +570,18 @@ export default class AllPlays extends PlayMakes {
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
 
-    this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
-    this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
-    //this.make(Cylinder, { v_pos: Vec2.make(200, 0) })
+    //this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
+    //this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
+    this.make(Cylinder, { apply: (i_repeat) => ({
+      v_pos: arr_rnd(r_screen.vertices)
+    })
+    }, ticks.seconds * 4, 0)
+    this.make(Cylinder, { apply: (i_repeat) => ({
+      v_pos: arr_rnd(r_screen.vertices)
+    })
+    }, ticks.seconds * 4, 0)
+
+
 
     /*
     this.make(Explode, {

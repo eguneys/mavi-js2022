@@ -52,8 +52,10 @@ export class Vec2 {
     return Math.atan2(this.y, this.x)
   }
 
-  constructor(readonly x: number, 
-    readonly y: number) { }
+  constructor(x: number, y: number) {
+    this.x = x
+    this.y = y
+  }
 
 
   dot(v: Vec2) {
@@ -344,7 +346,15 @@ export class Circle {
 
   scale(n: number) { return Circle.make(this.o.clone, this.r * n) }
 
-  constructor(readonly o: Vec2, readonly r: number) {}
+  copy_in(circle: Circle) {  
+    this.r = circle.r 
+    this.o = circle.o 
+  }
+
+  constructor(o: Vec2, r: number) {
+    this.o = o
+    this.r = r
+  }
 }
 
 export class Rectangle {

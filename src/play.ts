@@ -311,6 +311,19 @@ class CylinderInCircle extends WithRigidPlays {
     this.v_group.length = 0
 
     this.plays.all(CylinderInCircle).forEach(_ => this !== _ && circ_orig(this.circle.scale(8), _.vs) && this.v_group.push(_.vs))
+
+    let { vs } = this
+    if (this.on_interval(ticks.seconds)) {
+      this.make(LineLine, {
+        apply: () => ({
+          v_pos: vs,
+          radius: 6 + rnd_int(15),
+          color: 'red'
+        })
+      }, ticks.sixth)
+    }
+
+
   }
 
   _draw() {
@@ -410,6 +423,30 @@ class Cursor extends WithRigidPlays {
   _dispose() {}
 }
 
+class LineLine extends WithPlays {
+
+  _init() {
+    let { v_pos } = this.data
+
+    this.vs = v_pos
+    this.w = 100
+    this.h = 100
+
+    this.vertices = [Vec2.make(0, 0), Vec2.make(100, 100), Vec2.make(20, 200), Vec2.make(200, 0)]
+  }
+
+  _update(dt: number, dt0: number) {
+  }
+
+  _draw() {
+
+    let { color } = this.data
+    let { w, h,vertices, vs } = this
+
+    this.g.queue('cyan', true, this.g._fr, 0, vertices[0].x, vertices[0].y, w, h, vertices)
+  }
+}
+
 class VanishDot extends WithRigidPlays {
 
   v_flee = Vec2.unit
@@ -424,7 +461,7 @@ class VanishDot extends WithRigidPlays {
 
   _init() {
     let radius = 30
-    this._th = tween([0.8, 0.2].map(_ => _ * radius), [arr_rnd([ticks.sixth * 2, ticks.five * 2])])
+    this._th = tween([0.8, 0.2, 0.16].map(_ => _ * radius), [arr_rnd([ticks.sixth * 1.5, ticks.five * 2, ticks.three])])
 
     let { v_pos, x, y } = this.data
 
@@ -575,11 +612,14 @@ class Explode extends WithPlays {
       })
     }, ticks.sixth, -10)
 
+    this.dispose()
   }
 
   _update(dt: number, dt0: number) {}
 
   _draw() {}
+
+  _dispose() {}
 
 }
 
@@ -604,6 +644,7 @@ export default class AllPlays extends PlayMakes {
 
     //this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
     //this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
+    
     this.make(Cylinder, { apply: (i_repeat) => ({
       v_pos: arr_rnd(r_screen.vertices)
     })
@@ -622,6 +663,7 @@ export default class AllPlays extends PlayMakes {
       v_pos: arr_rnd(r_screen.vertices)
     })
     }, ticks.seconds * 1, 0)
+
 
     /*
     this.make(Explode, {

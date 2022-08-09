@@ -1,3 +1,5 @@
+import { Vec2 } from './vec2'
+
 export default class Graphics {
   constructor(readonly width: number,
     readonly height: number,
@@ -33,6 +35,18 @@ export default class Graphics {
     this.ctx.fill()
   }
 
+  _fv = (x: number, y: number, w: number, h: number, vertices: Array<Vec2>) => {
+
+    /*
+    this.ctx.lineWidth = 10
+    this.ctx.beginPath()
+
+    this.ctx.moveTo(x, y)
+    vertices.forEach(v => this.ctx.lineTo(x + v.x, y + v.y))
+    this.ctx.stroke()
+   */
+  }
+
 
   /* https://stackoverflow.com/questions/1255512/how-to-draw-a-rounded-rectangle-using-html-canvas */
   _frr = (x: number, y: number, w: number, h: number, r: number) => {
@@ -64,7 +78,6 @@ export default class Graphics {
         let [_f, r, x, y, w, h, ...rest] = _
         x = x + off - x * 0.008
         y = y + off - y * 0.008
-
         draw_ctx(this.ctx, _f, r, x, y, w, h, ...rest)
       })
     })

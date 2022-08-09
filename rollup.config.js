@@ -4,6 +4,7 @@ const htmlTemplate = require('rollup-plugin-generate-html-template')
 import babel from '@rollup/plugin-babel'
 import url from '@rollup/plugin-url'
 import copy from 'rollup-plugin-copy'
+import { string } from 'rollup-plugin-string'
 
 const serve = require('rollup-plugin-serve')
 const livereload = require('rollup-plugin-livereload')
@@ -36,6 +37,9 @@ export default args => {
         targets: [
           { src: 'assets/vsound.min.js', dest: 'dist' }
         ]
+      }),
+      string({
+        include: ['src/webgl/*.frag', 'src/webgl/*.vert']
       }),
       url({ limit: 1000 }),
       htmlTemplate({

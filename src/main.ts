@@ -1,10 +1,10 @@
 import { Vec2 } from './vec2'
-import Graphics from './graphics'
 import Play from './play'
 import { Pointer, bind_pointer } from './pointer'
+import { Canvas, Graphics, Batcher } from './webgl'
 
-let w = 1920
-let h = 1080
+let w = 320
+let h = 180
 
 function loop(fn: (dt: number, dt0: number) => void) {
   let animation_frame_id
@@ -64,18 +64,11 @@ const make_norm_mouse = (has_bounds: any) => {
 
 export default function app(element: HTMLElement) {
 
-  let canvas = document.createElement('canvas')
-  let ctx = canvas.getContext('2d')
-  canvas.width = w
-  canvas.height = h
-  element.appendChild(canvas)
+  let canvas = new Canvas(element, w, h)
+  let graphics = new Graphics(canvas)
+  let g = new Batcher(graphics)
 
-  let g = new Graphics(w, h, ctx)
-
-
-  let m = new Pointer().init(bind_pointer(canvas))
-  let bounds = make_bounds(element)
-
+  let m = new Pointer().init(bind_pointer(canvas.$canvas))
   let _ctx = {
     g,
     m
@@ -83,17 +76,17 @@ export default function app(element: HTMLElement) {
 
   let p = new Play(_ctx).init()
 
+  g.init()
+
   loop((dt: number, dt0: number) => {
 
     m.update(dt, dt0)
     p.update(dt, dt0)
 
-    g.clear()
-    g.queue('lightblue', false, g._fr, 0, 0, 0, w, h)
-    g.flush()
 
-    p.draw()
+    g.render()
 
-    g.flush()
+
+
   })
 }

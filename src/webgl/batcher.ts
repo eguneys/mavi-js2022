@@ -1,5 +1,8 @@
 import vSource from './default.vert'
 import fSource from './default.frag'
+import { color_rgb } from './util'
+import { Rectangle, Matrix } from '../vec2'
+import { Quad } from './quad'
 
 export class Batcher {
 
@@ -23,6 +26,17 @@ export class Batcher {
 
   }
 
+  fr(x: number, y: number, w: number, h: number) {
+
+    let res = Matrix.identity.translate_in(x, y).scale_in(w, h)
+    this._els.push(res)
+  }
+
+  fc(x: number, y: number, r: number) {
+    let res = Matrix.identity.translate_in(x, y).scale_in(r, r)
+    this._els.push(res)
+  }
+
   render() {
 
     let { g, nb } = this
@@ -34,6 +48,8 @@ export class Batcher {
     g.glUse(program, uniformData)
 
     g.glClear()
+
+    let { fsUv } = Quad.make(0, 0, 100, 100)
 
     let aIndex = 0,
       iIndex = 0
@@ -48,8 +64,8 @@ export class Batcher {
         _attributeBuffer[aIndex++] = vertexData[k]
         _attributeBuffer[aIndex++] = vertexData[k+1]
 
-        _attributeBuffer[aIndex++] = 0//fsUv[k]
-        _attributeBuffer[aIndex++] = 0//fsUv[k+1]
+        _attributeBuffer[aIndex++] = fsUv[k]
+        _attributeBuffer[aIndex++] = fsUv[k+1]
 
         _attributeBuffer[aIndex++] = tintData[0]
         _attributeBuffer[aIndex++] = tintData[1]
@@ -60,6 +76,8 @@ export class Batcher {
         _indexBuffer[iIndex++] = i * 4 + indices[k]
       }
     })
+
+    this._els = []
 
     g.glAttribUpdate(attributeBuffer, _attributeBuffer)
     g.glIndexUpdate(indexBuffer, _indexBuffer)

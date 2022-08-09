@@ -261,6 +261,7 @@ export class Matrix {
 
     this.tx = tx
     this.ty = ty
+    return this
   }
 
 
@@ -273,6 +274,7 @@ export class Matrix {
   scale_in(x: number, y: number) {
     this.a = x
     this.d = y
+    return this
   }
 
   mVec2(v: Vec2): Vec2 {
@@ -397,6 +399,17 @@ export class Rectangle {
     return Vec2.make(this.x + this.w / 2,
                      this.y + this.h / 2)
   }
+
+  get vertexData(): Float32Array {
+    return new Float32Array(
+      this.vertices.flatMap(_ =>
+                            _.vs))
+  }
+
+  get indices(): Uint16Array {
+    return new Uint16Array([0, 1, 2, 0, 2, 3])
+  }
+
 
   larger(r: number) {
     return Rectangle.make(this.x - r, this.y - r,

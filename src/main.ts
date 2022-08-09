@@ -84,6 +84,10 @@ export default function app(element: HTMLElement) {
     p.update(dt, dt0)
 
 
+    g.fr(50, 50, 100, 100)
+
+    g.fc(200, 50, 20)
+
     g.render()
 
 

@@ -87,6 +87,7 @@ export default function app(element: HTMLElement) {
     g.fr(50, 50, 100, 100)
 
     g.fc(200, 50, 20)
+    g.fc(0, 50, 200)
 
     g.render()
 

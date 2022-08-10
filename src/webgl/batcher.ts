@@ -11,7 +11,7 @@ export class Batcher {
   nb = 24000
   _els = []
   _indexBuffer = new Uint16Array(this.nb * 3)
-  _attributeBuffer = new Float32Array(this.nb * 6)
+  _attributeBuffer = new Float32Array(this.nb * 9)
 
   _programs = new Map()
 
@@ -33,7 +33,7 @@ export class Batcher {
     let res = m_template.translate(-w/2, -h/2).rotate(r).translate(x, y)
     let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
 
-    this._els.push([res, color, quad])
+    this._els.push([res, color, quad, 0])
   }
 
   fc(color: number, x: number, y: number, r: number) {
@@ -41,12 +41,12 @@ export class Batcher {
       h = r
     let res = m_template.translate(x-w/2, y-h/2)
     let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
-    this._els.push([res, color, quad])
+    this._els.push([res, color, quad, 1])
   }
 
   render() {
 
-    let { g, nb } = this
+    let { g } = this
     let { _indexBuffer, _attributeBuffer } = this
 
 
@@ -60,7 +60,7 @@ export class Batcher {
       iIndex = 0
 
     this._els.forEach((_, i) => {
-      let [matrix, color, quad] = _
+      let [matrix, color, quad, type] = _
 
       let el = Rectangle.unit.transform(matrix)
       let { vertexData, indices } = el
@@ -78,6 +78,9 @@ export class Batcher {
         _attributeBuffer[aIndex++] = tintData[0]
         _attributeBuffer[aIndex++] = tintData[1]
         _attributeBuffer[aIndex++] = tintData[2]
+
+        _attributeBuffer[aIndex++] = type
+        _attributeBuffer[aIndex++] = 0
       }
 
       for (let k = 0; k < indices.length; k++) {
@@ -90,7 +93,7 @@ export class Batcher {
     g.glAttribUpdate(attributeBuffer, _attributeBuffer)
     g.glIndexUpdate(indexBuffer, _indexBuffer)
 
-    g.glDraw(nb * 4, vao)
+    g.glDraw(iIndex, vao)
   }
 
 }

@@ -10,6 +10,7 @@ import {
   b_avoid_circle_steer, 
   b_flee_steer } from './rigid'
 import psfx from './audio'
+import Camera from './camera'
 
 const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
 tween([start, start, 1, end].map(_ => _ * radius), [ticks.five + ticks.three, ticks.three * 2, ticks.three * 2])
@@ -177,6 +178,7 @@ abstract class WithPlays extends PlayMakes {
 
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
+    this.camera = new Camera(this.g, 320/1920)
     this.on_dispose = []
   }
 
@@ -300,7 +302,7 @@ class CylinderInCircle extends WithRigidPlays {
     this.make(Explode, { apply: () => ({
       v_pos: self.vs,
       destroy: self
-    }) }, ticks.seconds * 2)
+    }) }, ticks.seconds)
     this.v_circle.copy_in(this.data.circle.circle)
   }
 
@@ -328,7 +330,7 @@ class CylinderInCircle extends WithRigidPlays {
 
   _draw() {
     let { vs, side } = this
-    //this.g.queue('red', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
+    this.camera.fr(colors.red, side.angle, vs.x, vs.y, 40, 80)
   }
 
   _dispose() {
@@ -369,7 +371,7 @@ class Cylinder extends WithRigidPlays {
 
   _draw() {
     let { vs, side } = this
-    //this.g.queue('darkred', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
+    this.camera.fr(colors.darkred, side.angle, vs.x, vs.y, 40, 80)
   }
 
 
@@ -409,14 +411,14 @@ class Cursor extends WithRigidPlays {
       this.make(HollowCircle, {
         v_pos: this.vs,
         radius: 400,
-        color: 'yellow'
+        color: colors.yellow
       })
     }
   }
 
   _draw() {
     let { vs } = this
-    this.g.fc(colors.red, vs.x/1920 * 320, vs.y/1080*180, 10)
+    this.camera.fc(colors.red, vs.x, vs.y, 80)
   }
 
 
@@ -482,7 +484,7 @@ class VanishDot extends WithRigidPlays {
     let { w, vs } = this
     let [h] = read(this._th)
 
-    //this.g.queue(color, true, this.g._frr, this.angle, vs.x, vs.y, w, h, w/4)
+    //this.camera.fr(color, this.angle, vs.x, vs.y, w, h)
   }
 
 
@@ -509,7 +511,7 @@ class VanishCircle extends WithPlays {
   _draw() {
     let { v_pos, x, y, color } = this.data
     let [radius] = read(this._rt)
-    //this.g.queue(color, true, this.g._fc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius)
+    this.camera.fc(color, v_pos.x + x, v_pos.y + y, radius)
   }
 
 
@@ -574,7 +576,7 @@ class Explode extends WithPlays {
       x: 0,
       y: 0,
       radius: 110,
-      color: 'white'
+      color: colors.white
     })
 
     this.make(VanishCircle, {
@@ -582,7 +584,7 @@ class Explode extends WithPlays {
       x: 0,
       y: 0,
       radius: 90,
-      color: 'red'
+      color: colors.red
     }, ticks.sixth)
 
 
@@ -599,7 +601,7 @@ class Explode extends WithPlays {
       x: v.x,
       y: v.y,
       radius: 30,
-      color: 'red'
+      color: colors.red
     }, ticks.sixth * 1.8))
 
     this.make(VanishDot, {
@@ -608,7 +610,7 @@ class Explode extends WithPlays {
         x: rnd_int_h(6),
         y: rnd_int_h(10),
         radius: 6 + rnd_int(15),
-        color: 'red'
+        color: colors.red
       })
     }, ticks.sixth, -10)
 
@@ -663,7 +665,6 @@ export default class AllPlays extends PlayMakes {
       v_pos: arr_rnd(r_screen.vertices)
     })
     }, ticks.seconds * 1, 0)
-
 
     /*
     this.make(Explode, {

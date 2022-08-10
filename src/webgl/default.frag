@@ -1,8 +1,8 @@
 #version 300 es
 precision highp float;
-in vec3 aTint;
 in vec2 vTextureCoord;
 in vec3 vTint;
+in vec2 vType;
 out vec4 outColor;
 
 float sdBox( in vec2 p, in vec2 b )
@@ -18,8 +18,14 @@ float sdCircle(vec2 p, float r) {
 void main() {
   vec2 p = vTextureCoord;
   p -= vec2(0.5);
-  float sd = sdCircle(p, 0.5-0.005);
-  //float sd = sdBox(p, vec2(0.5 - 0.005 - 0.3)) - 0.3;
+
+  float sd;
+
+  if (vType.x == 1.0) {
+    sd = sdCircle(p, 0.5-0.005);
+  } else if (vType.x == 0.0) { 
+    sd = sdBox(p, vec2(0.5 - 0.005 - 0.3)) - 0.3;
+  }
   vec4 col = (sd > 0.0) ? vec4(0.9, 0.6, 0.3, 0.0) : vec4(0.64, 0.85, 1.0, 1.0);
   col = mix(col, vec4(1.0), 1.0 - step(0.005, abs(sd)));
   col.rgb *= vTint;

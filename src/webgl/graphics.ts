@@ -45,13 +45,13 @@ export class Graphics {
 
     let attributeBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, attributeBuffer)
-    gl.bufferData(gl.ARRAY_BUFFER, nb * 6 * 4, gl.DYNAMIC_DRAW)
+    gl.bufferData(gl.ARRAY_BUFFER, nb * 9 * 4, gl.DYNAMIC_DRAW)
     
     let indexBuffer = gl.createBuffer()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, nb * 3 * 4, gl.DYNAMIC_DRAW)
 
-    let stride = 2 * 4 + 2 * 4 + 3 * 4
+    let stride = 2 * 4 + 2 * 4 + 3 * 4 + 2 * 4
 
     let a1loc = attributeData['aVertexPosition'].location
     gl.enableVertexAttribArray(a1loc)
@@ -67,6 +67,9 @@ export class Graphics {
     gl.enableVertexAttribArray(a3loc)
     gl.vertexAttribPointer(a3loc, 3, gl.FLOAT, false, stride, 2*4 + 2*4)
 
+    let a4loc = attributeData['aType'].location
+    gl.enableVertexAttribArray(a4loc)
+    gl.vertexAttribPointer(a4loc, 2, gl.FLOAT, false, stride, 2*4 + 2*4 + 3*4)
 
 
     gl.bindVertexArray(null)

@@ -14,7 +14,8 @@ export const ticks = {
 }
 
 export const colors = {
-  bg: 0x000000,
+  bg: 0xa0a0a0,
+  white: 0xffffff,
   red: 0xff0000,
   darkred: 0xcc0000
 }

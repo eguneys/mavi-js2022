@@ -1,10 +1,9 @@
+import { w, h, colors } from './shared'
 import { Vec2 } from './vec2'
 import Play from './play'
 import { Pointer, bind_pointer } from './pointer'
 import { Canvas, Graphics, Batcher } from './webgl'
 
-let w = 320
-let h = 180
 
 function loop(fn: (dt: number, dt0: number) => void) {
   let animation_frame_id
@@ -76,7 +75,8 @@ export default function app(element: HTMLElement) {
 
   let p = new Play(_ctx).init()
 
-  g.init()
+  g.init(colors.bg)
+  let t = 0
 
   loop((dt: number, dt0: number) => {
 
@@ -84,10 +84,24 @@ export default function app(element: HTMLElement) {
     p.update(dt, dt0)
 
 
-    g.fr(50, 50, 100, 100)
+    let n = 1980
+    //g.fr(-n/2 + 160, -n/2+90, n, n)
 
-    g.fc(200, 50, 20)
-    g.fc(0, 50, 200)
+    //g.fr(colors.red, 0, 0, 1920, 1080);
+    let x = 600
+    //g.fr(colors.darkred, x/2, x/2, 1920-x, 1080-x)
+    //g.fr(colors.darkred, 500, 100, 20, 50)
+    //g.fr(colors.darkred, 100, 200, 100, 50)
+
+    //g.fc(colors.darkred, 0, 0, Math.abs(Math.sin(t * 0.0001)) * 300)
+
+    //g.fr(colors.red, w/2, h/2, 100, 180)
+    //g.fr(colors.red, Math.abs(Math.sin(t * 0.0001)) * Math.PI * 2, w/2, h/2, 8, 12)
+    //g.fr(colors.darkred, 10, 0, 100, 100)
+
+    t += dt
+
+    p.draw()
 
     g.render()
 

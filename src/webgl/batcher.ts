@@ -4,6 +4,8 @@ import { color_rgb } from './util'
 import { Rectangle, Matrix } from '../vec2'
 import { Quad } from './quad'
 
+const m_template = Matrix.identity.scale(640, 360)
+
 export class Batcher {
 
   nb = 24000
@@ -15,26 +17,31 @@ export class Batcher {
 
   constructor(readonly g: Graphics) {}
 
-  init() {
+  init(bg) {
     let { g, nb } = this
     let def = g.glProgram(vSource, fSource, nb)
 
     g.glOnce({
-      color: 0x1099bb
+      color: bg
     })
     this._programs.set('default', def)
 
   }
 
-  fr(x: number, y: number, w: number, h: number) {
+  fr(color: number, r: number, x: number, y: number, w: number, h: number) {
 
-    let res = Matrix.identity.translate_in(x, y).scale_in(w, h)
-    this._els.push(res)
+    let res = m_template.translate(-w/2, -h/2).rotate(r).translate(x, y)
+    let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
+
+    this._els.push([res, color, quad])
   }
 
-  fc(x: number, y: number, r: number) {
-    let res = Matrix.identity.translate_in(x, y).scale_in(r, r)
-    this._els.push(res)
+  fc(color: number, x: number, y: number, r: number) {
+    let w = r,
+      h = r
+    let res = m_template.translate(x-w/2, y-h/2)
+    let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
+    this._els.push([res, color, quad])
   }
 
   render() {
@@ -49,16 +56,17 @@ export class Batcher {
 
     g.glClear()
 
-    let { fsUv } = Quad.make(0, 0, 100, 100)
-
     let aIndex = 0,
       iIndex = 0
 
-    this._els.map(matrix => Rectangle.unit.transform(matrix)).forEach((el, i) => {
+    this._els.forEach((_, i) => {
+      let [matrix, color, quad] = _
 
+      let el = Rectangle.unit.transform(matrix)
       let { vertexData, indices } = el
+      let { fsUv } = quad
 
-      let tintData = color_rgb(0x00ff00)
+      let tintData = color_rgb(color)
 
       for (let k = 0; k < vertexData.length; k+= 2) {
         _attributeBuffer[aIndex++] = vertexData[k]

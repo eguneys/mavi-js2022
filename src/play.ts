@@ -1,4 +1,4 @@
-import { ticks } from './shared'
+import { colors, ticks } from './shared'
 import { ti, completed, read, update, tween } from './anim'
 import { Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
@@ -328,7 +328,7 @@ class CylinderInCircle extends WithRigidPlays {
 
   _draw() {
     let { vs, side } = this
-    this.g.queue('red', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
+    //this.g.queue('red', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
   }
 
   _dispose() {
@@ -369,7 +369,7 @@ class Cylinder extends WithRigidPlays {
 
   _draw() {
     let { vs, side } = this
-    this.g.queue('darkred', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
+    //this.g.queue('darkred', true, this.g._frr, side.angle, vs.x, vs.y, 40, 80, 18)
   }
 
 
@@ -416,7 +416,7 @@ class Cursor extends WithRigidPlays {
 
   _draw() {
     let { vs } = this
-    this.g.queue('lightyellow', true, this.g._fc, 0, vs.x, vs.y, 30, 30, 30)
+    this.g.fc(colors.red, vs.x/1920 * 320, vs.y/1080*180, 10)
   }
 
 
@@ -443,7 +443,7 @@ class LineLine extends WithPlays {
     let { color } = this.data
     let { w, h,vertices, vs } = this
 
-    this.g.queue('cyan', true, this.g._fr, 0, vertices[0].x, vertices[0].y, w, h, vertices)
+    //this.g.queue('cyan', true, this.g._fr, 0, vertices[0].x, vertices[0].y, w, h, vertices)
   }
 }
 
@@ -482,7 +482,7 @@ class VanishDot extends WithRigidPlays {
     let { w, vs } = this
     let [h] = read(this._th)
 
-    this.g.queue(color, true, this.g._frr, this.angle, vs.x, vs.y, w, h, w/4)
+    //this.g.queue(color, true, this.g._frr, this.angle, vs.x, vs.y, w, h, w/4)
   }
 
 
@@ -509,7 +509,7 @@ class VanishCircle extends WithPlays {
   _draw() {
     let { v_pos, x, y, color } = this.data
     let [radius] = read(this._rt)
-    this.g.queue(color, true, this.g._fc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius)
+    //this.g.queue(color, true, this.g._fc, 0, v_pos.x + x, v_pos.y + y, radius, radius, radius)
   }
 
 
@@ -542,9 +542,9 @@ class HollowCircle extends WithRigidPlays {
     let [_bradius, _, i] = read(this._rt)
     if (i <= 1) {
       let __bradius = _bradius * 1.8
-      this.g.queue('white', false, this.g._hc, 0, x, y, radius, radius, radius, radius - __bradius)
+      //this.g.queue('white', false, this.g._hc, 0, x, y, radius, radius, radius, radius - __bradius)
     } else {
-      this.g.queue(color, i > 2, this.g._hc, 0, x, y, radius, radius, radius, radius - _bradius)
+      //this.g.queue(color, i > 2, this.g._hc, 0, x, y, radius, radius, radius, radius - _bradius)
     }
     /*
     radius += 6

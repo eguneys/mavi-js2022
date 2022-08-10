@@ -2,10 +2,12 @@ import { Rectangle, Matrix } from '../vec2'
 
 export class Quad {
 
-  static make = (x: number,
+  static make = (tw: number,
+                 th: number,
+  x: number,
                  y: number,
   w: number,
-  h: number) => new Quad(Rectangle.make(x, y, w, h))
+  h: number) => new Quad(tw, th, Rectangle.make(x, y, w, h))
 
   readonly fsUv: Float32Array
 
@@ -28,11 +30,7 @@ export class Quad {
   get x3(): number { return this.x0 }
   get y3(): number { return this.y2 }
 
-  constructor(readonly _frame: Rectangle) {
-
-
-    this.tw = _frame.w
-    this.th = _frame.h
+  constructor(readonly tw: number, readonly th: number, readonly _frame: Rectangle) {
 
     this.frame = _frame.transform(
       Matrix.unit.scale(1/this.tw,

@@ -3,6 +3,7 @@ in vec3 aTint;
 in vec2 aVertexPosition;
 in vec2 aTextureCoord;
 uniform mat3 projectionMatrix;
+out vec2 vVertexCoord;
 out vec2 vTextureCoord;
 out vec3 vTint;
 void main() {

@@ -14,9 +14,7 @@ export class Canvas {
                 $wrap.appendChild(this.$canvas)
 
                 let gl = this.$canvas.getContext('webgl2', { alpha: true, antialias: false });
-                if (gl !== null) {
-                  this.gl = gl
-                }
+                this.gl = gl
               }
 
 }

@@ -28,20 +28,20 @@ export class Batcher {
 
   }
 
-  fr(color: number, r: number, x: number, y: number, w: number, h: number) {
+  fr(color: number, r: number, x: number, y: number, w: number, h: number, hollow: number) {
 
     let res = m_template.translate(-w/2, -h/2).rotate(r).translate(x, y)
     let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
 
-    this._els.push([res, color, quad, 0])
+    this._els.push([res, color, quad, 0, hollow])
   }
 
-  fc(color: number, x: number, y: number, r: number) {
+  fc(color: number, x: number, y: number, r: number, hollow: number) {
     let w = r,
       h = r
     let res = m_template.translate(x-w/2, y-h/2)
     let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
-    this._els.push([res, color, quad, 1])
+    this._els.push([res, color, quad, 1, hollow])
   }
 
   render() {
@@ -60,7 +60,7 @@ export class Batcher {
       iIndex = 0
 
     this._els.forEach((_, i) => {
-      let [matrix, color, quad, type] = _
+      let [matrix, color, quad, type, type2] = _
 
       let el = Rectangle.unit.transform(matrix)
       let { vertexData, indices } = el
@@ -80,7 +80,7 @@ export class Batcher {
         _attributeBuffer[aIndex++] = tintData[2]
 
         _attributeBuffer[aIndex++] = type
-        _attributeBuffer[aIndex++] = 0
+        _attributeBuffer[aIndex++] = type2
       }
 
       for (let k = 0; k < indices.length; k++) {

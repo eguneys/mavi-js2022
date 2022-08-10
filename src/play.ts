@@ -4,6 +4,7 @@ import { Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
 import { 
   steer_behaviours, 
+  b_no_steer,
   b_wander_steer,
   b_separation_steer,
   b_arrive_steer, 
@@ -523,7 +524,7 @@ class VanishCircle extends WithPlays {
 class HollowCircle extends WithRigidPlays {
 
   _init() {
-    this._rt = quick_burst(6, 1.2, 0.8)
+    this._rt = quick_burst(2, 1.2, 0.2)
   }
 
   _update(dt: number, dt0: number) {
@@ -544,9 +545,9 @@ class HollowCircle extends WithRigidPlays {
     let [_bradius, _, i] = read(this._rt)
     if (i <= 1) {
       let __bradius = _bradius * 1.8
-      //this.g.queue('white', false, this.g._hc, 0, x, y, radius, radius, radius, radius - __bradius)
+      this.camera.fc(colors.white, x, y, (radius+_bradius*2) * 2, __bradius/radius)
     } else {
-      //this.g.queue(color, i > 2, this.g._hc, 0, x, y, radius, radius, radius, radius - _bradius)
+      this.camera.fc(color, x, y, radius * 2, _bradius/radius)
     }
     /*
     radius += 6

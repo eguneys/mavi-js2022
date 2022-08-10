@@ -227,6 +227,7 @@ export function make_wander(vs: Vec2, opts: RigidOptions) {
   }
 }
 
+export const b_no_steer = (_body) => Vec2.zero
 
 export const b_wander_steer = (jitter: number, r: number, distance: number) => {
   let v_wander = Vec2.unit

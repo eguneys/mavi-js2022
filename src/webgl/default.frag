@@ -21,11 +21,17 @@ void main() {
 
   float sd;
 
-  if (vType.x == 1.0) {
+  if (vType.x == 2.0) {
+  } else if (vType.x == 1.0) {
     sd = sdCircle(p, 0.5-0.005);
   } else if (vType.x == 0.0) { 
     sd = sdBox(p, vec2(0.5 - 0.005 - 0.3)) - 0.3;
   }
+
+  if (vType.y > 0.0) {
+    sd = abs(sd+vType.y) - vType.y;
+  }
+
   vec4 col = (sd > 0.0) ? vec4(0.9, 0.6, 0.3, 0.0) : vec4(0.64, 0.85, 1.0, 1.0);
   col = mix(col, vec4(1.0), 1.0 - step(0.005, abs(sd)));
   col.rgb *= vTint;

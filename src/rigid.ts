@@ -153,6 +153,10 @@ export function steer_behaviours(vs: Vec2, opts: RigidOptions, bs: Array<Behavio
       let steering = 
         desired_vel.sub(_body.velocity)
       .scale(opts.max_force / opts.max_speed)
+      if (isNaN(steering.x)) {
+        console.log(bs, w, desired_vel, _body.velocity)
+        throw 3
+      }
       _body.add_force(steering.scale(w))
     })
 
@@ -237,8 +241,8 @@ export const b_wander_steer = (jitter: number, r: number, distance: number) => {
 export const b_separation_steer = group =>
 (_body) => separation_steer(_body.vs, group, _body.max_speed)
 
-export const b_avoid_circle_steer = target =>
-(_body) => avoid_circle_steer(_body.vs, target, _body.max_speed)
+export const b_avoid_circle_steer = (target, zero_angle) =>
+(_body) => avoid_circle_steer(_body.vs, target, _body.max_speed, zero_angle)
 
 export const b_flee_steer = (target, zero_angle) =>
 (_body) => flee_steer(_body.vs, target, _body.max_speed, zero_angle, 100)

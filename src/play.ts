@@ -341,6 +341,7 @@ class CylinderInCircle extends WithRigidPlays {
 
 class Cylinder extends WithRigidPlays {
 
+  v_circle = Circle.unit
   v_group = []
   r_opts = {
     mass: 1000,
@@ -349,9 +350,10 @@ class Cylinder extends WithRigidPlays {
     max_force: 5
   }
   r_bs = [
-    [b_separation_steer(this.v_group), 0.5], 
-    [b_arrive_steer(this.v_target), 0.45],
-  [b_wander_steer(10, 500, 400), 0.05]
+    [b_arrive_steer(this.v_target), 0.4],
+    [b_avoid_circle_steer(this.v_circle, rnd_angle()), 0.25], 
+    [b_separation_steer(this.v_group), 0.3], 
+    [b_wander_steer(10, 500, 400), 0.05],
   ]
   r_wh = Vec2.make(40, 80)
 
@@ -364,6 +366,8 @@ class Cylinder extends WithRigidPlays {
   _update(dt: number, dt0: number) {
     let { x, y } = this._cursor.pursue_target
     this.v_target.set_in(x, y)
+
+    this.v_circle.copy_in(this._cursor.circle.scale(2))
 
     this.v_group.length = 0
 
@@ -395,6 +399,7 @@ class Cursor extends WithRigidPlays {
   }
 
   r_bs = [[b_arrive_steer(this.v_target), 1]]
+  r_wh = Vec2.make(80, 80)
 
   get pursue_target() {
     return this.vs

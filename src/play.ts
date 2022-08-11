@@ -14,10 +14,6 @@ import psfx from './audio'
 import Camera from './camera'
 
 
-const slow_burst = (radius: number, rng: RNG = random) => 
-tween([0.1, 0.1, 0.5, 1, 0.8, 1].map(_ => _ * radius), arr_shuffle([ticks.five + ticks.three, ticks.three * 2, ticks.five * 2, ticks.five, ticks.three * 2], rng))
-
-
 
 const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
 tween([start, start, 1, end].map(_ => _ * radius), [ticks.five + ticks.three, ticks.three * 2, ticks.three * 2])
@@ -68,7 +64,8 @@ function rnd_int(max: number, rng: RNG = random) {
 
 /* https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array */
 function arr_shuffle(a: Array<A>, rng: RNG = random, b, c, d) {
-  c=a.length;while(c)b=rng()*c--|0,d=a[c],a[c]=a[b],a[b]=d
+  c=a.length;while(c)b=rng()*c--|0,d=a[c],a[c]=a[b],a[b]=d;
+  return a
 }
 
 function arr_rnd(arr: Array<A>) {
@@ -78,6 +75,13 @@ function arr_rnd(arr: Array<A>) {
 function arr_remove(arr: Array<A>, a: A) {
   arr.splice(arr.indexOf(a), 1)
 }
+
+
+
+const slow_burst = (radius: number, rng: RNG = random) => 
+tween([0.1, 0.1, 0.5, 1].map(_ => _ * radius), arr_shuffle([ticks.five + ticks.three, ticks.three * 2, ticks.five * 2, ticks.five, ticks.three * 2], rng))
+
+
 
 
 const jaggy = (max: number, rng: RNG = random) => {
@@ -198,6 +202,10 @@ abstract class PlayMakes extends Play {
     super.update(dt, dt0)
   }
 
+
+  _init() {}
+  _update() {}
+  _draw() {}
 }
 
 abstract class WithPlays extends PlayMakes {
@@ -232,7 +240,7 @@ abstract class WithPlays extends PlayMakes {
   }
 
 
-  abstract _dispose(_: string): void;
+  _dispose(_: string) {}
 }
 
 abstract class WithRigidPlays extends WithPlays {
@@ -361,10 +369,6 @@ class CylinderInCircle extends WithRigidPlays {
     let { vs, side } = this
     this.camera.fr(colors.red, side.angle, vs.x, vs.y, 40, 80)
   }
-
-  _dispose() {
-  }
-
 }
 
 class Cylinder extends WithRigidPlays {
@@ -454,9 +458,6 @@ class Cursor extends WithRigidPlays {
     let { vs } = this
     this.camera.fc(colors.red, vs.x, vs.y, 80)
   }
-
-
-  _dispose() {}
 }
 
 class LineLine extends WithPlays {
@@ -473,7 +474,7 @@ class LineLine extends WithPlays {
 
     let jagg = jaggy(20)
     this.vertices = line.segments(...jagg)
-    this._rt = quick_burst(this.lines.length-1, 0.2, 1)
+    this._rt = slow_burst(this.lines.length-1)
   }
 
   _update(dt: number, dt0: number) {
@@ -495,8 +496,6 @@ class LineLine extends WithPlays {
                        Math.sin(this.life * 0.02* Math.sin(i * 0.02)) * 60)
     })
   }
-
-  _dispose() {}
 }
 
 class VanishDot extends WithRigidPlays {
@@ -536,10 +535,6 @@ class VanishDot extends WithRigidPlays {
 
     this.camera.fr(color, this.angle, vs.x, vs.y, w, h)
   }
-
-
-  _dispose() {
-  }
 }
 
 class VanishCircle extends WithPlays {
@@ -562,10 +557,6 @@ class VanishCircle extends WithPlays {
     let { v_pos, x, y, color } = this.data
     let [radius] = read(this._rt)
     this.camera.fc(color, v_pos.x + x, v_pos.y + y, radius)
-  }
-
-
-  _dispose() {
   }
 }
 
@@ -605,9 +596,6 @@ class HollowCircle extends WithRigidPlays {
     this.g.queue('black', 0, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
    */
   }
-
-
-  _dispose() {}
 }
 
 class Explode extends WithPlays {
@@ -668,11 +656,6 @@ class Explode extends WithPlays {
   }
 
   _update(dt: number, dt0: number) {}
-
-  _draw() {}
-
-  _dispose() {}
-
 }
 
 

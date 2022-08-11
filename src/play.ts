@@ -1,6 +1,6 @@
 import { w, h, colors, ticks } from './shared'
 import { ti, completed, read, update, tween } from './anim'
-import { Vec2, Rectangle, Circle } from './vec2'
+import { Line, Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
 import { 
   steer_behaviours, 
@@ -426,10 +426,6 @@ class Cursor extends WithRigidPlays {
   _draw() {
     let { vs } = this
     this.camera.fc(colors.red, vs.x, vs.y, 80)
-
-    this.camera.line(colors.yellow, Math.sin(this.life * 0.001) * Math.PI, 100, 100, 200, 20)
-    this.camera.line(colors.yellow, Math.sin(this.life * 0.001) * Math.PI, 500, 500, 200, 40)
-    this.camera.line(colors.yellow, Math.sin(this.life * 0.001) * Math.PI, 1000, 500, 1000, 100)
   }
 
 
@@ -438,6 +434,11 @@ class Cursor extends WithRigidPlays {
 
 class LineLine extends WithPlays {
 
+  get lines() {
+    return [...Array(this.vertices.length - 1).keys()]
+    .map(i => Line.make(this.vertices[i].x, this.vertices[i].y, this.vertices[i+1].x, this.vertices[i+1].y))
+  }
+
   _init() {
     let { v_pos } = this.data
 
@@ -445,7 +446,7 @@ class LineLine extends WithPlays {
     this.w = 100
     this.h = 100
 
-    this.vertices = [Vec2.make(0, 0), Vec2.make(100, 100), Vec2.make(20, 200), Vec2.make(200, 0)]
+    this.vertices = [Vec2.make(0, 0), Vec2.make(1900, 100), Vec2.make(20, 200)]//, Vec2.make(200, 0)]
   }
 
   _update(dt: number, dt0: number) {
@@ -456,7 +457,10 @@ class LineLine extends WithPlays {
     let { color } = this.data
     let { w, h,vertices, vs } = this
 
-    //this.g.queue('cyan', true, this.g._fr, 0, vertices[0].x, vertices[0].y, w, h, vertices)
+    this.lines.forEach(line => {
+      this.camera.line(colors.yellow, line.angle, line.center.x, line.center.y, line.radius, 16)
+    })
+
   }
 }
 
@@ -654,6 +658,15 @@ export default class AllPlays extends PlayMakes {
     this.objects = []
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
+
+    this.make(LineLine, {
+      apply: () => ({
+        v_pos: Vec2.make(0, 0),
+        radius: 6 + rnd_int(15),
+        color: 'red'
+      })
+    }, ticks.sixth)
+
 
     //this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
     //this.make(Cylinder, { v_pos: Vec2.make(100, 0) })

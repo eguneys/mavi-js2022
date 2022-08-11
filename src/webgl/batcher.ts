@@ -39,8 +39,7 @@ export class Batcher {
   fc(color: number, x: number, y: number, r: number, hollow: number) {
     let w = r,
       h = r
-    let res = m_template.translate(x-w/2, y-h/2)
-    res = Matrix.identity.scale(w, h).translate(x - w / 2, y - h / 2)
+    let res = Matrix.identity.scale(w, h).translate(- w / 2, - h / 2).translate(x, y)
     let quad = Quad.make(w, h, 0, 0, w, h)
     this._els.push([res, color, quad, 1, hollow])
   }

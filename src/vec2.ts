@@ -365,6 +365,36 @@ export class Circle {
   }
 }
 
+
+export class Line {
+
+  static make = (x: number, y: number, x2: number, y2: number) => new Line(Vec2.make(x, y), Vec2.make(x2, y2))
+
+  get center() {
+    return this.b.add(this.a).half
+  }
+
+  get parallel() {
+    return this.b.sub(this.a).normalize
+  }
+
+  get normal() {
+    return this.parallel.perpendicular
+  }
+
+  get angle() {
+    return this.b.sub(this.a).angle
+  }
+
+  get radius() {
+    return this.b.sub(this.a).half.length
+  }
+
+  constructor(readonly a: Vec2, readonly b: Vec2) {}
+
+}
+
+
 export class Rectangle {
 
   static make = (x: number, y: number,

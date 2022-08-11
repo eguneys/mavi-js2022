@@ -30,8 +30,8 @@ export class Batcher {
 
   fr(color: number, r: number, x: number, y: number, w: number, h: number, hollow: number) {
 
-    let res = m_template.translate(-w/2, -h/2).rotate(r).translate(x, y)
-    let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
+    let res = Matrix.identity.scale(w, h).translate(-w/2, -h/2).rotate(r).translate(x, y)
+    let quad = Quad.make(w, h, 0, 0, w, h)
 
     this._els.push([res, color, quad, 0, hollow])
   }
@@ -40,8 +40,18 @@ export class Batcher {
     let w = r,
       h = r
     let res = m_template.translate(x-w/2, y-h/2)
-    let quad = Quad.make(w, h, 0, 0, m_template.a, m_template.d)
+    res = Matrix.identity.scale(w, h).translate(x - w / 2, y - h / 2)
+    let quad = Quad.make(w, h, 0, 0, w, h)
     this._els.push([res, color, quad, 1, hollow])
+  }
+
+  line(color: number, _a: number, _x: number, _y: number, _r: number, stroke: number = 10) {
+    let w = _r * 2
+    let h = stroke
+    let res = Matrix.identity.scale(w, h).translate(-w/2, -h/2).rotate(_a).translate(_x, _y)
+    let quad = Quad.make(w, h, 0, 0, w, h)
+
+    this._els.push([res, color, quad, 2])
   }
 
   render() {

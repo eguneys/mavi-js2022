@@ -1,4 +1,4 @@
-import { colors, ticks } from './shared'
+import { w, h, colors, ticks } from './shared'
 import { ti, completed, read, update, tween } from './anim'
 import { Vec2, Rectangle, Circle } from './vec2'
 import { make_sticky_pos } from './make_sticky'
@@ -179,7 +179,7 @@ abstract class WithPlays extends PlayMakes {
 
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
-    this.camera = new Camera(this.g, 320/1920)
+    this.camera = new Camera(this.g, w/1920)
     this.on_dispose = []
   }
 
@@ -414,6 +414,7 @@ class Cursor extends WithRigidPlays {
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
     if (this.on_interval(ticks.seconds * 3)) {
+      return
       this.make(HollowCircle, {
         v_pos: this.vs,
         radius: 400,
@@ -425,6 +426,10 @@ class Cursor extends WithRigidPlays {
   _draw() {
     let { vs } = this
     this.camera.fc(colors.red, vs.x, vs.y, 80)
+
+    this.camera.line(colors.yellow, Math.sin(this.life * 0.001) * Math.PI, 100, 100, 200, 20)
+    this.camera.line(colors.yellow, Math.sin(this.life * 0.001) * Math.PI, 500, 500, 200, 40)
+    this.camera.line(colors.yellow, Math.sin(this.life * 0.001) * Math.PI, 1000, 500, 1000, 100)
   }
 
 
@@ -490,7 +495,7 @@ class VanishDot extends WithRigidPlays {
     let { w, vs } = this
     let [h] = read(this._th)
 
-    //this.camera.fr(color, this.angle, vs.x, vs.y, w, h)
+    this.camera.fr(color, this.angle, vs.x, vs.y, w, h)
   }
 
 
@@ -653,6 +658,7 @@ export default class AllPlays extends PlayMakes {
     //this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
     //this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
     
+    /*
     this.make(Cylinder, { apply: (i_repeat) => ({
       v_pos: arr_rnd(r_screen.vertices)
     })
@@ -672,6 +678,7 @@ export default class AllPlays extends PlayMakes {
     })
     }, ticks.seconds * 1, 0)
 
+   */
     /*
     this.make(Explode, {
       apply: (i_repeat) => ({

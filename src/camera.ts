@@ -14,4 +14,10 @@ export default class Camera {
     this.g.fc(0x000000, r * _x + 2 - _x * 0.0025, r * _y + 2 - _y * 0.0025, r * _r, hollow)
     this.g.fc(color, r * _x, r * _y, r * _r, hollow)
   }
+
+  line(color, _x, _y, _x2, _y2, stroke) {
+    let { r } = this
+
+    this.g.line(color, r * _x, r * _y, r * _x2, r * _y2, stroke * r)
+  }
 }

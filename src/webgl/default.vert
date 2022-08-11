@@ -12,6 +12,7 @@ out vec2 vType;
 void main() {
   gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0, 1);
   vTextureCoord = aTextureCoord;
+  vVertexCoord = gl_Position.xy;
   vTint = aTint;
   vType = aType;
 }

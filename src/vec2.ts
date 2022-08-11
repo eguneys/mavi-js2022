@@ -387,7 +387,19 @@ export class Line {
   }
 
   get radius() {
-    return this.b.sub(this.a).half.length
+    return this.length / 2
+  }
+
+  get length() {
+    return this.b.sub(this.a).length
+  }
+
+
+  segments(ns: Array<number>, xs: Array<number>) {
+
+    return ns.map((_, i) => 
+           this.a.add(this.normal.scale(xs[i]).add(this.parallel.scale(this.length * _))))
+
   }
 
   constructor(readonly a: Vec2, readonly b: Vec2) {}

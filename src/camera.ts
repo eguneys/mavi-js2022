@@ -18,6 +18,7 @@ export default class Camera {
   line(color, a, _x, _y, _r, stroke = 10) {
     let { r } = this
 
+    this.g.line(0xffffff, a, r * _x + 2 - _x * 0.0015, r * _y + 2 - _y * 0.0015, r * _r, stroke * r)
     this.g.line(color, a, r * _x, r * _y, r * _r, stroke * r)
   }
 }

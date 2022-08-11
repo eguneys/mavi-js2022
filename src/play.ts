@@ -13,6 +13,12 @@ import {
 import psfx from './audio'
 import Camera from './camera'
 
+
+const slow_burst = (radius: number, rng: RNG = random) => 
+tween([0.1, 0.1, 0.5, 1, 0.8, 1].map(_ => _ * radius), arr_shuffle([ticks.five + ticks.three, ticks.three * 2, ticks.five * 2, ticks.five, ticks.three * 2], rng))
+
+
+
 const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
 tween([start, start, 1, end].map(_ => _ * radius), [ticks.five + ticks.three, ticks.three * 2, ticks.three * 2])
 
@@ -60,12 +66,35 @@ function rnd_int(max: number, rng: RNG = random) {
   return Math.floor(rng() * max)
 }
 
+/* https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array */
+function arr_shuffle(a: Array<A>, rng: RNG = random, b, c, d) {
+  c=a.length;while(c)b=rng()*c--|0,d=a[c],a[c]=a[b],a[b]=d
+}
+
 function arr_rnd(arr: Array<A>) {
   return arr[rnd_int(arr.length)]
 }
 
 function arr_remove(arr: Array<A>, a: A) {
   arr.splice(arr.indexOf(a), 1)
+}
+
+
+const jaggy = (max: number, rng: RNG = random) => {
+
+  let ns = [...Array(1 + rnd_int(max, rng)).keys()].map(_ => rng()).sort()
+  let wander_target = 0
+  let jitter = 3
+  let r = 3 + rng() * max
+  let distance = 8
+  let envelope = [0, 0.1, 0.3, 0.5, 0.3, 0]
+  let rs = ns.map((_, i) => {
+    wander_target += rnd_h(rng) * jitter
+    let res = wander_target * r + distance
+    let _envelope = envelope[Math.floor(i / ns.length * envelope.length)]
+    return res * _envelope
+  })
+  return [ns, rs]
 }
 
 abstract class Play {
@@ -320,8 +349,7 @@ class CylinderInCircle extends WithRigidPlays {
       this.make(LineLine, {
         apply: () => ({
           v_pos: vs,
-          radius: 6 + rnd_int(15),
-          color: 'red'
+          line: Line.make(...rnd_vec(v_screen).vs, ...rnd_vec(v_screen).vs)
         })
       }, ticks.sixth)
     }
@@ -414,7 +442,6 @@ class Cursor extends WithRigidPlays {
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
     if (this.on_interval(ticks.seconds * 3)) {
-      return
       this.make(HollowCircle, {
         v_pos: this.vs,
         radius: 400,
@@ -440,16 +467,20 @@ class LineLine extends WithPlays {
   }
 
   _init() {
-    let { v_pos } = this.data
+    let { v_pos, line } = this.data
 
     this.vs = v_pos
-    this.w = 100
-    this.h = 100
 
-    this.vertices = [Vec2.make(0, 0), Vec2.make(1900, 100), Vec2.make(20, 200)]//, Vec2.make(200, 0)]
+    let jagg = jaggy(20)
+    this.vertices = line.segments(...jagg)
+    this._rt = quick_burst(this.lines.length-1, 0.2, 1)
   }
 
   _update(dt: number, dt0: number) {
+    update(this._rt, dt, dt0)
+    if (this.on_interval(ticks.seconds)) {
+      this.dispose()
+    }
   }
 
   _draw() {
@@ -457,11 +488,15 @@ class LineLine extends WithPlays {
     let { color } = this.data
     let { w, h,vertices, vs } = this
 
-    this.lines.forEach(line => {
-      this.camera.line(colors.yellow, line.angle, line.center.x, line.center.y, line.radius, 16)
-    })
+    let [_n] = read(this._rt)
 
+    this.lines.slice(0, Math.floor(_n)).forEach((line, i) => {
+      this.camera.line(colors.yellow, line.angle, line.center.x, line.center.y, line.radius, 
+                       Math.sin(this.life * 0.02* Math.sin(i * 0.02)) * 60)
+    })
   }
+
+  _dispose() {}
 }
 
 class VanishDot extends WithRigidPlays {
@@ -659,19 +694,20 @@ export default class AllPlays extends PlayMakes {
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
 
+    /*
     this.make(LineLine, {
       apply: () => ({
         v_pos: Vec2.make(0, 0),
-        radius: 6 + rnd_int(15),
-        color: 'red'
+        line: Line.make(...rnd_vec(v_screen).vs, ...rnd_vec(v_screen).vs),
+        color: colors.red
       })
-    }, ticks.sixth)
+    }, ticks.sixth, 0)
 
 
+   */
     //this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
     //this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
     
-    /*
     this.make(Cylinder, { apply: (i_repeat) => ({
       v_pos: arr_rnd(r_screen.vertices)
     })
@@ -691,7 +727,6 @@ export default class AllPlays extends PlayMakes {
     })
     }, ticks.seconds * 1, 0)
 
-   */
     /*
     this.make(Explode, {
       apply: (i_repeat) => ({

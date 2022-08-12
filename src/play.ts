@@ -88,7 +88,7 @@ const jaggy = (max: number, rng: RNG = random) => {
 
   let ns = [...Array(1 + rnd_int(max, rng)).keys()].map(_ => rng()).sort()
   let wander_target = 0
-  let jitter = 3
+  let jitter = 4
   let r = 3 + rng() * max
   let distance = 8
   let envelope = [0, 0.1, 0.3, 0.5, 0.3, 0]
@@ -335,11 +335,10 @@ class CylinderInCircle extends WithRigidPlays {
 
   _init() {
 
-    let self = this
+    let { vs } = this
     this._cursor = this.plays.one(Cursor)
     this.make(Explode, { apply: () => ({
-      v_pos: self.vs,
-      destroy: self
+      v_pos: vs
     }) }, ticks.seconds)
     this.v_circle.copy_in(this.data.circle.circle)
   }
@@ -354,6 +353,7 @@ class CylinderInCircle extends WithRigidPlays {
 
     let { vs } = this
     if (this.on_interval(ticks.seconds)) {
+      this.dispose()
       this.make(LineLine, {
         apply: () => ({
           v_pos: vs,
@@ -413,11 +413,13 @@ class Cylinder extends WithRigidPlays {
 
 
   _dispose(reason: any) {
+    if (reason) {
     this.make(CylinderInCircle, {
       circle: reason,
       cylinder: this,
       v_pos: this.vs
     })
+    }
   }
 }
 
@@ -444,6 +446,19 @@ class Cursor extends WithRigidPlays {
   _update(dt: number, dt0: number) {
 
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
+
+    if (this.on_interval(ticks.half)) {
+      let target = this.plays.one(Cylinder)
+      if (target) {
+        this.make(HomingLift, {
+          target,
+          v_pos: this.vs,
+          color: colors.red,
+          x: rnd_int_h(6),
+          y: rnd_int_h(6)
+        })
+      }
+    }
 
     if (this.on_interval(ticks.seconds * 3)) {
       this.make(HollowCircle, {
@@ -494,6 +509,93 @@ class LineLine extends WithPlays {
     this.lines.slice(0, Math.floor(_n)).forEach((line, i) => {
       this.camera.line(colors.yellow, line.angle, line.center.x, line.center.y, line.radius, 
                        Math.sin(this.life * 0.02* Math.sin(i * 0.02)) * 60)
+    })
+  }
+}
+
+
+class HomingHome extends WithRigidPlays {
+
+  v_target = Vec2.unit
+  r_opts = {
+    mass: 100,
+    air_friction: 0.98,
+    max_speed: 100,
+    max_force: 0.5
+  }
+  r_bs = [[b_wander_steer(10, 200, 100), 0.2],
+    [b_arrive_steer(this.v_target), 0.8]
+  ]
+  r_wh = Vec2.make(40, 80)
+
+
+  _init() {}
+
+  _update(dt: number, dt0: number) {
+
+    let { target } = this.data
+    this.v_target.set_in(target.vs.x, target.vs.y)
+
+    if (this.on_interval(ticks.seconds)) {
+      this.dispose()
+    }
+  }
+
+  _draw() {
+    let { color } = this.data
+
+    let { h, w, vs } = this
+
+    this.camera.fr(colors.yellow, this.angle, vs.x, vs.y, w, h)
+  }
+
+
+  _dispose() {
+    this.make(Explode, {
+      v_pos: this.vs
+    })
+  }
+}
+class HomingLift extends WithRigidPlays {
+
+  v_flee = Vec2.unit
+  r_opts = {
+    mass: 400,
+    air_friction: 0.8,
+    max_speed: 100,
+    max_force: 20
+  }
+  r_bs = [[b_wander_steer(10, 200, 100), 0.7],
+    [b_flee_steer(this.v_flee, rnd_angle()), 0.3]
+  ]
+  r_wh = Vec2.make(40, 80)
+
+
+  _init() {
+
+    let { v_pos, x, y } = this.data
+    this.v_flee.set_in(v_pos.x + x, v_pos.y + y)
+  }
+
+  _update(dt: number, dt0: number) {
+    if (this.on_interval(ticks.sixth)) {
+      this.dispose()
+    }
+  }
+
+  _draw() {
+    let { color } = this.data
+
+    let { w, vs } = this
+
+    this.camera.fr(color, this.angle, vs.x, vs.y, w, w)
+  }
+
+  _dispose() {
+    this.make(HomingHome, {
+      v_pos: this.vs,
+      color: this.data.color,
+      target: this.data.target
     })
   }
 }
@@ -605,9 +707,9 @@ class Explode extends WithPlays {
 
     let { v_pos } = this.data
 
-    let { destroy } = this.data
+    //let { destroy } = this.data
 
-    destroy.dispose()
+    //destroy?.dispose()
 
     this.make(VanishCircle, {
       v_pos,
@@ -669,7 +771,7 @@ export default class AllPlays extends PlayMakes {
   }
 
   one(Ctor: any) {
-    return this.objects.find(_ => _ instanceof Ctor)
+    return this.objects.findLast(_ => _ instanceof Ctor)
   }
 
   _init() {

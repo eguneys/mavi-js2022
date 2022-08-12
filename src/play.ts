@@ -453,7 +453,7 @@ class Cursor extends WithRigidPlays {
         this.make(HomingLift, {
           target,
           v_pos: this.vs,
-          color: colors.red,
+          color: colors.yellow,
           x: rnd_int_h(6),
           y: rnd_int_h(6)
         })
@@ -518,15 +518,15 @@ class HomingHome extends WithRigidPlays {
 
   v_target = Vec2.unit
   r_opts = {
-    mass: 100,
-    air_friction: 0.98,
-    max_speed: 100,
-    max_force: 0.5
+    mass: 40000,
+    air_friction: 0.99,
+    max_speed: 200,
+    max_force: 100
   }
   r_bs = [[b_wander_steer(10, 200, 100), 0.2],
     [b_arrive_steer(this.v_target), 0.8]
   ]
-  r_wh = Vec2.make(40, 80)
+  r_wh = Vec2.make(30, 60)
 
 
   _init() {}
@@ -560,7 +560,7 @@ class HomingLift extends WithRigidPlays {
 
   v_flee = Vec2.unit
   r_opts = {
-    mass: 400,
+    mass: 1000,
     air_friction: 0.8,
     max_speed: 100,
     max_force: 20
@@ -568,7 +568,7 @@ class HomingLift extends WithRigidPlays {
   r_bs = [[b_wander_steer(10, 200, 100), 0.7],
     [b_flee_steer(this.v_flee, rnd_angle()), 0.3]
   ]
-  r_wh = Vec2.make(40, 80)
+  r_wh = Vec2.make(30, 40)
 
 
   _init() {

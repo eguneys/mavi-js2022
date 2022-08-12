@@ -760,6 +760,36 @@ class Explode extends WithPlays {
   _update(dt: number, dt0: number) {}
 }
 
+class Area extends WithPlays {
+
+  _init() {
+    let rng = random
+    this._rt = tween([0.1, 0.3, 0.5, 0.912].map(_ => _ * 100), [ticks.seconds, ticks.seconds, ticks.seconds * 2], rng)
+
+  }
+
+  _update(dt: number, dt0: number) {
+    update(this._rt, dt, dt0)
+
+    if (completed(this._rt)) {
+      this.dispose()
+    }
+  }
+
+  _draw() {
+
+    let [_n] = read(this._rt)
+    let { color, x, y, radius } = this.data
+    let rotation = this.life * 0.003 + Math.sin(this.life * 0.015) * 0.2 + Math.cos(this.life0 * 0.01) * 0.2
+    if (_n % 6 > 3) {
+      this.camera.fr(colors.white, rotation-0.1, x, y, radius, radius, 0.03-(_n%3)* 0.01, colors.white)
+    }
+    {
+      this.camera.fr(color, rotation, x, y, radius, radius, 0.9999, colors.white)
+    }
+  }
+
+}
 
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
@@ -792,6 +822,8 @@ export default class AllPlays extends PlayMakes {
    */
     //this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
     //this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
+    
+    this.make(Area, { x: v_screen.half.x, y: v_screen.half.y, color: colors.gray, radius: 1000 }, ticks.seconds * 8, 0)
     
     this.make(Cylinder, { apply: (i_repeat) => ({
       v_pos: arr_rnd(r_screen.vertices)

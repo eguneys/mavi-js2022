@@ -23,6 +23,10 @@ float sdSegment( in vec2 p, in vec2 a, in vec2 b )
     return length( pa - ba*h );
 }
 
+vec2 opRep( in vec2 p, in vec2 c) {
+    return mod(p+0.5*c,c)-0.5*c;
+}
+
 
 void main() {
   vec2 p = vTextureCoord;
@@ -38,14 +42,24 @@ void main() {
     sd = sdBox(p, vec2(0.5 - 0.005 - 0.3)) - 0.3;
   }
 
+
+  float a = 1.0;
+
+  if (vType.y == 0.9999) {
+    float ad;
+    vec2 q = opRep(p, vec2(0.035));
+    ad = sdBox(q, vec2(0.001))-0.008;
+    a = step(0.01, abs(ad));
+  }
+
+
   if (vType.y > 0.0) {
     sd = abs(sd+vType.y) - vType.y;
   }
 
-  vec4 col = (sd > 0.0) ? vec4(0.9, 0.6, 0.3, 0.0) : vec4(0.64, 0.85, 1.0, 1.0);
+  vec4 col = (sd > 0.0) ? vec4(0.0) : vec4(1.0, 1.0, 1.0, a);
   col = mix(col, vec4(1.0), 1.0 - step(0.005, abs(sd)));
   col.rgb *= vTint;
-  //col.g = p.y;
-  outColor = vec4(col.rgb * col.a, col.a);
+  outColor = vec4(col.rgb, col.a);
 }
 

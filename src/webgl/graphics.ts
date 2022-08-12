@@ -28,7 +28,7 @@ export class Graphics {
     gl.viewport(0, 0, this.width, this.height)
     gl.clearColor(...color_rgb(color||0x000000), 1)
     gl.enable(gl.BLEND)
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
   }
 
   glProgram = (vSource: string, fSource: string, nb: number) => {

@@ -18,5 +18,6 @@ export const colors = {
   white: 0xffffff,
   red: 0xff0000,
   darkred: 0xcc0000,
-  yellow: 0xffff00
+  yellow: 0xffff00,
+  gray: 0xcccccc,
 }

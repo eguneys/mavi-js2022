@@ -21,4 +21,10 @@ export default class Camera {
     this.g.line(0xffffff, a, r * _x + 2 - _x * 0.0015, r * _y + 2 - _y * 0.0015, r * _r, stroke * r)
     this.g.line(color, a, r * _x, r * _y, r * _r, stroke * r)
   }
+
+
+  texture(color: number, _r: number, x: number, y: number, w: number, h: number, sx: number, sy: number, sw: number, sh: number) {
+    let { r } = this
+    this.g.texture(color, _r, x * r, y * r, w * r, h * r, sx, sy, sw, sh)
+  }
 }

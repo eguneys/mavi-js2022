@@ -3,7 +3,15 @@ import { Vec2 } from './vec2'
 import Play from './play'
 import { Pointer, bind_pointer } from './pointer'
 import { Canvas, Graphics, Batcher } from './webgl'
+import sprites_png from '../assets/sprites.png'
 
+function load_image(path: string): Promise<HTMLImageElement> {
+  return new Promise(resolve => {
+    let res = new Image()
+    res.onload = () => resolve(res)
+    res.src = path
+  })
+}
 
 function loop(fn: (dt: number, dt0: number) => void) {
   let animation_frame_id
@@ -59,9 +67,12 @@ const make_norm_mouse = (has_bounds: any) => {
   }
 }
 
-
-
 export default function app(element: HTMLElement) {
+  load_image(sprites_png).then(image => start(element, image))
+}
+
+
+function start(element: HTMLElement, image: HTMLImageElement) {
 
   let canvas = new Canvas(element, w, h)
   let graphics = new Graphics(canvas)
@@ -75,7 +86,7 @@ export default function app(element: HTMLElement) {
 
   let p = new Play(_ctx).init()
 
-  g.init(colors.bg)
+  g.init(colors.bg, image)
   let t = 0
 
   loop((dt: number, dt0: number) => {

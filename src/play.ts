@@ -474,6 +474,8 @@ class Cursor extends WithRigidPlays {
   _draw() {
     let { vs } = this
     this.camera.fc(colors.red, vs.x, vs.y, 80)
+
+    this.camera.texture(colors.white, 0, 0, 0, 100, 100, 0, 0, 10, 10)
   }
 }
 
@@ -812,6 +814,7 @@ export default class AllPlays extends PlayMakes {
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
 
+    //return
     /*
     this.make(LineLine, {
       apply: () => ({

@@ -9,6 +9,7 @@ Sound [https://eguneys.github.io/vsound/](https://eguneys.github.io/vsound/)
 Tween Snippet [https://gist.github.com/eguneys/8ca56803e01fadb28a2045931f83293d](https://gist.github.com/eguneys/8ca56803e01fadb28a2045931f83293d)
 
 
+Shader minifier rollup plugin [https://github.com/SalvatorePreviti/spglsl/tree/master/project/packages/spglsl](https://github.com/SalvatorePreviti/spglsl/tree/master/project/packages/spglsl).
 
 ## TODO
 

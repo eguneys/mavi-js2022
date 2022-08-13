@@ -450,13 +450,15 @@ class Cursor extends WithRigidPlays {
     if (this.on_interval(ticks.half)) {
       let target = this.plays.one(Cylinder)
       if (target) {
+        let a = target.vs.sub(this.vs).angle + Math.PI * 0.25
         this.make(HomingLift, {
-          target,
-          v_pos: this.vs,
-          color: colors.yellow,
-          x: rnd_int_h(6),
-          y: rnd_int_h(6)
-        })
+          apply: (i) => ({
+            angle: a + i * 0.5,
+            target,
+            v_pos: this.vs,
+            color: colors.yellow,
+          })
+        }, 0, -9)
       }
     }
 
@@ -560,21 +562,22 @@ class HomingLift extends WithRigidPlays {
 
   v_flee = Vec2.unit
   r_opts = {
-    mass: 1000,
+    mass: 100,
     air_friction: 0.8,
-    max_speed: 100,
-    max_force: 20
+    max_speed: 20,
+    max_force: 10
   }
-  r_bs = [[b_wander_steer(10, 200, 100), 0.7],
-    [b_flee_steer(this.v_flee, rnd_angle()), 0.3]
-  ]
+  r_bs = []
   r_wh = Vec2.make(30, 40)
 
 
   _init() {
 
-    let { v_pos, x, y } = this.data
-    this.v_flee.set_in(v_pos.x + x, v_pos.y + y)
+    let { v_pos, x, y, angle } = this.data
+    this.v_flee.set_in(v_pos.x, v_pos.y)
+
+    this.r_bs.unshift([b_flee_steer(this.v_flee, angle), 0.3])
+
   }
 
   _update(dt: number, dt0: number) {

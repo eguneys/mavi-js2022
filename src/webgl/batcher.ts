@@ -54,9 +54,9 @@ export class Batcher {
     this._els.push([0, res, color, quad, 2])
   }
 
-  texture(color: number, r: number, x: number, y: number, w: number, h: number, sx: number, sy: number, sw: number, sh: number) {
+  texture(color: number, r: number, x: number, y: number, w: number, h: number, sx: number, sy: number, sw: number, sh: number, tw: number, th: number) {
     let res = Matrix.identity.scale(w, h).translate(-w/2, -h/2).rotate(r).translate(x, y)
-    let quad = Quad.make(sw, sh, 0, 0, w, h)
+    let quad = Quad.make(tw, th, sx, sy, sw, sh)
     this._els.push([this._def2, res, color, quad])
   }
 

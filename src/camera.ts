@@ -25,6 +25,8 @@ export default class Camera {
 
   texture(color: number, _r: number, x: number, y: number, w: number, h: number, sx: number, sy: number, sw: number, sh: number) {
     let { r } = this
-    this.g.texture(color, _r, x * r, y * r, w * r, h * r, sx, sy, sw, sh)
+    let tw = 320,
+      th = 180
+    this.g.texture(color, _r, x * r, y * r, w, h, sx, sy, sw, sh, tw, th)
   }
 }

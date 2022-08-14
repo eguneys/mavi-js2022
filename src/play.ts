@@ -474,8 +474,25 @@ class Cursor extends WithRigidPlays {
   _draw() {
     let { vs } = this
     this.camera.fc(colors.red, vs.x, vs.y, 80)
+  }
+}
 
-    this.camera.texture(colors.white, 0, 0, 0, 100, 100, 0, 0, 10, 10)
+
+let letters = "abcdefghijklmnopqrstuvwxyz!0123456789,.".split('')
+
+class Letters extends WithPlays {
+  _draw() {
+
+    let text = typeof this.data.text === 'string' ? this.data.text : this.data.text()
+    let _letters = text.split('')
+    let { v_pos, scale } = this.data;
+    scale ||= 2
+    _letters.forEach((letter, i) => {
+      let sx = letters.indexOf(letter) * 8
+      if (sx >= 0) {
+        this.camera.texture(colors.white, 0, v_pos.x + i * scale * 5*(1920/320), v_pos.y, scale*5, scale*7, sx, 9, 5, 7)
+      }
+    })
   }
 }
 
@@ -829,6 +846,17 @@ export default class AllPlays extends PlayMakes {
     //this.make(Cylinder, { v_pos: Vec2.make(0, 0) }, ticks.seconds * 4, 0)
     //this.make(Cylinder, { v_pos: Vec2.make(100, 0) })
     
+    this.make(Letters, {
+      text: 'die in',
+      v_pos: Vec2.make(100, 100)
+    })
+
+    let self = this
+    this.make(Letters, {
+      scale: 3,
+      text() { return Math.floor(self.life / 1000) + '.' + Math.floor((self.life % 1000)/100) },
+      v_pos: Vec2.make(500, 100)
+    })
     this.make(Area, { x: v_screen.half.x, y: v_screen.half.y, color: colors.gray, radius: 1000 }, ticks.seconds * 8, 0)
     
     this.make(Cylinder, { apply: (i_repeat) => ({

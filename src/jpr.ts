@@ -5,7 +5,7 @@ export default class JPR {
   _been_on = undefined
 
   get just_on() {
-    return this._just_on
+    return this._been_on === 0
   }
 
   get been_on() {
@@ -13,7 +13,7 @@ export default class JPR {
   }
 
   get just_off() {
-    return this._just_off
+    return this._been_on === -1
   }
 
   _on() {
@@ -27,6 +27,9 @@ export default class JPR {
 
   update(dt: number, dt0: number) {
 
+    if (this._been_on === -1) {
+      this._been_on = undefined
+    }
     if (this._been_on !== undefined) {
       this._been_on += dt
     }
@@ -38,7 +41,7 @@ export default class JPR {
 
     if (this._just_off) {
       this._just_off = false
-      this._been_on = undefined
+      this._been_on = -1
     }
   }
 

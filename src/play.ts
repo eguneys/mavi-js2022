@@ -469,12 +469,14 @@ class Cursor extends WithRigidPlays {
       }
     }
 
-    if (this.on_interval(ticks.seconds * 3)) {
-      this.make(HollowCircle, {
-        v_pos: this.vs,
-        radius: 400,
-        color: colors.yellow
-      })
+    if (this.m.just_off || this.on_interval(ticks.seconds * 15)) {
+      if (!this.plays.one(HollowCircle)) {
+        this.make(HollowCircle, {
+          v_pos: this.vs,
+          radius: 400,
+          color: colors.yellow
+        })
+      }
     }
 
     /*
@@ -848,7 +850,7 @@ export default class AllPlays extends PlayMakes {
   _shake = 0
 
   shake(radius) {
-    this._shake = this._shake * 0.5 + radius
+    this._shake = this._shake * 0.6 + radius
   }
 
   _init() {

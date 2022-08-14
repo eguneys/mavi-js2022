@@ -1,4 +1,5 @@
 import { Vec2 } from './vec2'
+import JPR from './jpr'
 
 export interface BindAdapter {
   onMove: (v: Vec2) => void;
@@ -54,6 +55,8 @@ export class Pointer implements BindAdapter {
   bounds: Vec2 = Vec2.make(1920, 1080)
   pos: Vec2 = this.bounds.half
 
+  j_down= new JPR()
+
   onMove = (v: Vec2) => {
 
     let { pos, bounds } = this
@@ -66,11 +69,28 @@ export class Pointer implements BindAdapter {
 
   onClick = () => {}
 
-  onDown = () => {}
+  onDown = () => {
+    this.j_down._on()
+  }
 
-  onUp = () => {}
+  onUp = () => { 
+    this.j_down._off()
+  }
+
+  get just_on() {
+    return this.j_down.just_on
+  }
+
+  get just_off() {
+    return this.j_down.just_off
+  }
+
+  get been_on() {
+    return this.j_down.been_on
+  }
 
   update(dt: number, dt0: number) {
+    this.j_down.update(dt, dt0)
   }
 
   init(device: BindDevice) {

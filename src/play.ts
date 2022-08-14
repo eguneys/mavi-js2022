@@ -214,7 +214,7 @@ abstract class WithPlays extends PlayMakes {
   }
 
   shake(radius) {
-    this.camera.shake(arr_shuffle(_is, random), arr_shuffle(_is, random), radius)
+    this.plays.shake(radius)
   }
 
   constructor(readonly plays: AllPlays) {
@@ -449,9 +449,12 @@ class Cursor extends WithRigidPlays {
 
   _update(dt: number, dt0: number) {
 
+
+    let hold_shoot = this.m.been_on > 0
+
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
-    if (this.on_interval(ticks.half)) {
+    if (!hold_shoot && this.on_interval(ticks.half)) {
       let target = this.plays.one(Cylinder)
       if (target) {
         let a = target.vs.sub(this.vs).angle + Math.PI * 0.25
@@ -474,12 +477,14 @@ class Cursor extends WithRigidPlays {
       })
     }
 
+    /*
     if (this.on_interval(ticks.seconds * 2)) {
       this.shake(10)
     }
     if (this.on_interval(ticks.seconds * 5)) {
       this.shake(30)
     }
+   */
   }
 
 
@@ -745,6 +750,8 @@ class Explode extends WithPlays {
 
     //destroy?.dispose()
 
+    this.shake(10)
+
     this.make(VanishCircle, {
       v_pos,
       x: 0,
@@ -838,6 +845,12 @@ export default class AllPlays extends PlayMakes {
     return this.objects.findLast(_ => _ instanceof Ctor)
   }
 
+  _shake = 0
+
+  shake(radius) {
+    this._shake = this._shake * 0.5 + radius
+  }
+
   _init() {
 
     this.camera = new Camera(this.g, w/1920)
@@ -903,6 +916,14 @@ export default class AllPlays extends PlayMakes {
   }
 
   _update(dt: number, dt0: number) {
+
+    if (this.on_interval(ticks.half)) {
+      if (this._shake > 0) {
+        this.camera.shake(arr_shuffle(_is, random), arr_shuffle(_is, random), this._shake)
+        this._shake = 0
+      }
+    }
+
     this.camera.update(dt, dt0)
     this.objects.forEach(_ => _.update(dt, dt0))
   }

@@ -13,6 +13,7 @@ import {
 import psfx from './audio'
 import Camera from './camera'
 
+import { arr_shuffle } from './util'
 
 
 const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
@@ -60,12 +61,6 @@ function rnd_int_h(max: number, rng: RNG = random) {
 
 function rnd_int(max: number, rng: RNG = random) {
   return Math.floor(rng() * max)
-}
-
-/* https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array */
-function arr_shuffle(a: Array<A>, rng: RNG = random, b, c, d) {
-  c=a.length;while(c)b=rng()*c--|0,d=a[c],a[c]=a[b],a[b]=d;
-  return a
 }
 
 function arr_rnd(arr: Array<A>) {
@@ -214,9 +209,16 @@ abstract class WithPlays extends PlayMakes {
     this.plays.make(...args)
   }
 
+  get camera() {
+    return this.plays.camera
+  }
+
+  shake(radius) {
+    this.camera.shake(arr_shuffle(_is, random), arr_shuffle(_is, random), radius)
+  }
+
   constructor(readonly plays: AllPlays) {
     super(plays.ctx)
-    this.camera = new Camera(this.g, w/1920)
     this.on_dispose = []
   }
 
@@ -423,6 +425,8 @@ class Cylinder extends WithRigidPlays {
   }
 }
 
+let _is = [0, 0.1, -0.2, 0.2, -0.5, -0.3, -0.1, 0.3, 0.5, 0.8, -1, 0]
+
 class Cursor extends WithRigidPlays {
 
   r_opts = {
@@ -469,7 +473,15 @@ class Cursor extends WithRigidPlays {
         color: colors.yellow
       })
     }
+
+    if (this.on_interval(ticks.seconds * 2)) {
+      this.shake(10)
+    }
+    if (this.on_interval(ticks.seconds * 5)) {
+      this.shake(30)
+    }
   }
+
 
   _draw() {
     let { vs } = this
@@ -827,6 +839,9 @@ export default class AllPlays extends PlayMakes {
   }
 
   _init() {
+
+    this.camera = new Camera(this.g, w/1920)
+
     this.objects = []
 
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
@@ -888,6 +903,7 @@ export default class AllPlays extends PlayMakes {
   }
 
   _update(dt: number, dt0: number) {
+    this.camera.update(dt, dt0)
     this.objects.forEach(_ => _.update(dt, dt0))
   }
   _draw() {

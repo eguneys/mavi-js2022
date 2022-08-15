@@ -494,7 +494,7 @@ class Cursor extends WithRigidPlays {
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
     if (this.plays.on_beat(2)) {
-      this.b_counter+= 3
+      this.b_counter+= 6
     }
     if (this.plays.on_beat(8)) {
       this.eight_four = this.eight_four === 4 ? 8 : 4
@@ -506,7 +506,7 @@ class Cursor extends WithRigidPlays {
           v_pos: this.vs,
           color: colors.gray,
         })
-      }, ticks.three, this.b_counter * 0.08)
+      }, ticks.three, Math.abs(Math.sin(this.life * 0.001)) * 0.02 + this.b_counter * 0.003)
     }
 
     if (this.m.just_off) {
@@ -972,7 +972,7 @@ class Spawn extends WithPlays {
         apply: () => ({
           v_pos: arr_rnd(r_screen.vertices)
         })
-      }, 0, Math.sin(this.life * 0.00001) * Math.cos(this.life * 0.0001) * 14)
+      }, 0, Math.sin(this.life * 0.00001) * Math.cos(this.life * 0.0001) * (10 + Math.abs(Math.sin(this.life * 0.001) * 4)))
     }
   }
 }

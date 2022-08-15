@@ -10,8 +10,8 @@ export default class Camera {
   }
 
   shake(arr: Array<number>, arr2: Array<number>, radius) {
-    this._t = tween([...arr, 0.5, 0.2, 0.1, 0].map(_ => _ * radius), [ticks.five, ticks.three, ticks.one * 2])
-    this._t2 = tween([...arr2, 0.5, 0.2, 0.1, 0].map(_ => _ * radius), [ticks.five, ticks.three, ticks.one * 2])
+    this._t = tween([1.2, 0.8, 1.0, ...arr, 0.5, 0.2, 0].map(_ => _ * radius), [ticks.five, ticks.three, ticks.one * 2])
+    this._t2 = tween([1.2, 0.8, 1.0, ...arr2, 0.5, 0.2, 0].map(_ => _ * radius), [ticks.five, ticks.three, ticks.one * 2])
   }
 
   update(dt: number, dt0: number) {

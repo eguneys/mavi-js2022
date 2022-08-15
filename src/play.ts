@@ -8,6 +8,7 @@ import {
   b_wander_steer,
   b_separation_steer,
   b_arrive_steer, 
+  b_orbit_steer,
   b_avoid_circle_steer, 
   b_flee_steer } from './rigid'
 import { generate, psfx } from './audio'
@@ -100,6 +101,37 @@ const jaggy = (max: number, rng: RNG = random) => {
 const on_interval = (t, life, life0) => {
   return Math.floor(life0 / t) !== Math.floor(life / t)
 }
+
+const on_interval_lee = (t, life, life0, lee: Array<number>) => {
+  //return lee.some(_ => on_interval(t, life - _, life0 - _) || on_interval(t, life + _, life0 + _))
+  return lee.some(_ => (life + _) % t === 0 || (life - _) % t === 0)
+}
+
+/*
+console.log(3, 2, on_interval_lee(4, 3, 2))
+console.log(4, 3, on_interval_lee(4, 4, 3))
+console.log(5, 4, on_interval_lee(4, 5, 4))
+console.log(7, 6, on_interval_lee(4, 7, 6))
+console.log(8, 7, on_interval_lee(4, 8, 7))
+console.log(9, 8, on_interval_lee(4, 9, 8))
+console.log(6, 5, on_interval_lee(4, 6, 5))
+console.log(10, 9, on_interval_lee(4, 10, 9))
+
+console.log(11, 10, on_interval_lee(4, 11, 10))
+console.log(12, 11, on_interval_lee(4, 12, 11))
+console.log(13, 12, on_interval_lee(4, 13, 12))
+
+*/
+/*
+console.log(on_interval_lee(4, 3, 2) === true)
+console.log(on_interval_lee(4, 4, 3) === true)
+console.log(on_interval_lee(4, 5, 4) === true)
+console.log(on_interval_lee(4, 7, 8) === true)
+console.log(on_interval_lee(4, 8, 9) === true)
+console.log(on_interval_lee(4, 9, 8) === true)
+console.log(on_interval_lee(4, 6, 5) === false)
+console.log(on_interval_lee(4, 10, 9) === false)
+*/
 
 abstract class Play {
 
@@ -451,6 +483,7 @@ class Cursor extends WithRigidPlays {
   _init() {
     let { v_pos } = this.data
     this.eight_four = 8
+    this.b_counter = 0
   }
 
   _update(dt: number, dt0: number) {
@@ -460,26 +493,25 @@ class Cursor extends WithRigidPlays {
 
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
+    if (this.plays.on_beat(2)) {
+      this.b_counter+= 3
+    }
     if (this.plays.on_beat(8)) {
       this.eight_four = this.eight_four === 4 ? 8 : 4
     }
     if (!hold_shoot && this.plays.on_beat(4) && this.plays.on_beat(this.eight_four)) {
-      let target = this.plays.one(Cylinder)
-      if (target) {
-        let a = target.vs.sub(this.vs).angle + Math.PI * 0.25
-        this.make(HomingLift, {
-          apply: (i) => ({
-            angle: a + i * 0.5,
-            target,
-            v_pos: this.vs,
-            color: colors.yellow,
-          })
-        }, 0, -9)
-      }
+      this.make(HomingLift, {
+        apply: (i) => ({
+          i,
+          v_pos: this.vs,
+          color: colors.gray,
+        })
+      }, ticks.three, this.b_counter * 0.08)
     }
 
-    if (this.m.just_off || this.on_interval(ticks.seconds * 15)) {
-      if (!this.plays.one(HollowCircle)) {
+    if (this.m.just_off) {
+      if (!this.plays.one(HollowCircle) && this.plays.on_beat_lee(8, [0, 1])) {
+        this.b_counter = 2
         this.make(HollowCircle, {
           v_pos: this.vs,
           radius: 400,
@@ -568,9 +600,9 @@ class HomingHome extends WithRigidPlays {
   v_target = Vec2.unit
   r_opts = {
     mass: 40000,
-    air_friction: 0.99,
-    max_speed: 200,
-    max_force: 90
+    air_friction: 0.92,
+    max_speed: 300,
+    max_force: 390
   }
   r_bs = [[b_wander_steer(10, 200, 100), 0.2],
     [b_arrive_steer(this.v_target), 0.8]
@@ -602,6 +634,7 @@ class HomingHome extends WithRigidPlays {
 
 
   _dispose() {
+    this.data.target.dispose()
     this.make(Explode, {
       v_pos: this.vs
     })
@@ -609,29 +642,48 @@ class HomingHome extends WithRigidPlays {
 }
 class HomingLift extends WithRigidPlays {
 
-  v_flee = Vec2.unit
+  v_orbit = v_screen.half
   r_opts = {
     mass: 100,
-    air_friction: 0.8,
-    max_speed: 20,
-    max_force: 10
+    air_friction: 1,
+    max_speed: 80,
+    max_force: 8 
   }
-  r_bs = []
+  r_bs = [
+    [b_wander_steer(10, 50, 100), 0.2],
+  ]
   r_wh = Vec2.make(30, 40)
 
 
   _init() {
 
-    let { v_pos, x, y, angle } = this.data
-    this.v_flee.set_in(v_pos.x, v_pos.y)
-
-    this.r_bs.unshift([b_flee_steer(this.v_flee, angle), 0.3])
-
+    this._cursor = this.plays.one(Cursor)
+    this.r_bs.unshift([b_orbit_steer(this.v_orbit), 0.8])
   }
 
+
   _update(dt: number, dt0: number) {
+
+    let _v = this._cursor.pursue_target
+    this.v_orbit.set_in(_v.x, _v.y)
+
     if (this.on_interval(ticks.sixth)) {
+
+    let { v_pos, x, y, i } = this.data
+    let target = this.plays.all(Cylinder).find(_ => !_.flag)
+
+    if (target) {
+      this.target = target
+      target.flag = 1
+    }
+    if (this.target) {
+      this.make(HomingHome, {
+        v_pos: this.vs,
+        color: this.data.color,
+        target: this.target
+      })
       this.dispose()
+    }
     }
   }
 
@@ -644,11 +696,7 @@ class HomingLift extends WithRigidPlays {
   }
 
   _dispose() {
-    this.make(HomingHome, {
-      v_pos: this.vs,
-      color: this.data.color,
-      target: this.data.target
-    })
+    
   }
 }
 
@@ -919,14 +967,12 @@ class Spawn extends WithPlays {
 
 
   _update(dt: number, dt0: number) {
-
     if (this.plays.on_beat(8)) {
-
       this.make(Cylinder, {
         apply: () => ({
           v_pos: arr_rnd(r_screen.vertices)
         })
-      }, 0, -4)
+      }, 0, Math.sin(this.life * 0.00001) * Math.cos(this.life * 0.0001) * 14)
     }
   }
 }
@@ -953,6 +999,10 @@ export default class AllPlays extends PlayMakes {
 
   get beat_ms() {
     return this.one(BPM)?.beat_ms
+  }
+
+  on_beat_lee(sub: number, lee: Array<number> = [0, 1, 2]) {
+    return this.beat_ms !== undefined && on_interval_lee(sub, ...this.beat_ms, lee)
   }
 
   on_beat(sub: number) {
@@ -1023,7 +1073,7 @@ export default class AllPlays extends PlayMakes {
 
   _update(dt: number, dt0: number) {
 
-    if (this.on_interval(ticks.half)) {
+    if (this.on_beat_lee(4, [0, 1])) {
       if (this._shake > 0) {
         this.camera.shake(arr_shuffle(_is, random), arr_shuffle(_is, random), this._shake)
         this._shake = 0

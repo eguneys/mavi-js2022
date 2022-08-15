@@ -231,6 +231,7 @@ export function make_wander(vs: Vec2, opts: RigidOptions) {
   }
 }
 
+export const b_orbit_steer = target => (_body) => orbit_steer(_body.vs, target, _body.max_speed)
 export const b_no_steer = (_body) => Vec2.zero
 
 export const b_wander_steer = (jitter: number, r: number, distance: number) => {
@@ -250,6 +251,15 @@ export const b_flee_steer = (target, zero_angle) =>
 export const b_arrive_steer = target => 
 (_body) => arrive_steer(_body.vs, target, _body.max_speed, 100)
 
+function orbit_steer(position: Vec2, target: Vec2, max_speed: number) {
+
+  let target_offset = position.sub(target)
+  let out = target_offset.scale(target_offset.length < 200 ? 1 : -1).normalize
+
+ return target_offset.perpendicular.normalize.add(out).scale(max_speed / 2)
+  
+
+}
 
 function separation_steer(position: Vec2, group: Array<Vec2>, max_speed: number) {
   let res = Vec2.zero

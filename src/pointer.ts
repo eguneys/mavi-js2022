@@ -6,12 +6,14 @@ export interface BindAdapter {
   onClick: () => void;
   onDown: () => void;
   onUp: () => void;
+  onPointerLock: () => void;
+  onPointerUnlock: () => void;
 }
 
 export function bind_pointer($element) {
   return (hooks: BindAdapter) => {
 
-    let { onClick, onDown, onUp } = hooks
+    let { onPointerUnlock, onPointerLock, onClick, onDown, onUp } = hooks
 
     const onMove = e => hooks.onMove(Vec2.make(e.movementX, e.movementY))
 
@@ -27,8 +29,10 @@ export function bind_pointer($element) {
 
     let just_exited = false
     document.addEventListener('pointerlockchange', test_pointer_lock(() => {
+      onPointerLock()
       document.addEventListener('mousemove', onMove, false)
     }, () => {
+      onPointerUnlock()
       document.removeEventListener('mousemove', onMove, false)
       just_exited = true
       setTimeout(() => {
@@ -55,7 +59,16 @@ export class Pointer implements BindAdapter {
   bounds: Vec2 = Vec2.make(1920, 1080)
   pos: Vec2 = this.bounds.half
 
+  j_lock = new JPR()
   j_down= new JPR()
+
+  onPointerLock = () => {
+    this.j_lock._on()
+  }
+
+  onPointerUnlock = () => {
+    this.j_lock._off()
+  }
 
   onMove = (v: Vec2) => {
 
@@ -77,6 +90,18 @@ export class Pointer implements BindAdapter {
     this.j_down._off()
   }
 
+  get just_lock() {
+    return this.j_lock.just_on
+  }
+
+  get just_unlock() {
+    return this.j_lock.just_off
+  }
+  
+  get been_lock() {
+    return this.j_lock.been_on
+  }
+
   get just_on() {
     return this.j_down.just_on
   }
@@ -91,6 +116,7 @@ export class Pointer implements BindAdapter {
 
   update(dt: number, dt0: number) {
     this.j_down.update(dt, dt0)
+    this.j_lock.update(dt, dt0)
   }
 
   init(device: BindDevice) {

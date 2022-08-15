@@ -10,7 +10,7 @@ import {
   b_arrive_steer, 
   b_avoid_circle_steer, 
   b_flee_steer } from './rigid'
-import psfx from './audio'
+import { generate, psfx } from './audio'
 import Camera from './camera'
 
 import { arr_shuffle } from './util'
@@ -96,6 +96,11 @@ const jaggy = (max: number, rng: RNG = random) => {
   return [ns, rs]
 }
 
+
+const on_interval = (t, life, life0) => {
+  return Math.floor(life0 / t) !== Math.floor(life / t)
+}
+
 abstract class Play {
 
   get g() { return this.ctx.g }
@@ -132,7 +137,7 @@ abstract class Play {
 
   /* https://github.com/eguneys/monocle-engine/blob/master/Monocle/Scene.cs#L122 */
   on_interval(t: number) {
-    return Math.floor(this.life0 / t) !== Math.floor(this.life / t)
+    return on_interval(t, this.life, this.life0)
   }
 
   /* https://github.com/eguneys/monocle-engine/blob/master/Monocle/Util/Calc.cs#L944 */
@@ -147,7 +152,7 @@ abstract class Play {
 
 abstract class PlayMakes extends Play {
 
-  make(Ctor: any, data: any, delay: number = 0, repeat: number = 1) {
+  make(Ctor: any, data: any = {}, delay: number = 0, repeat: number = 1) {
     this.makes.push([Ctor, data, delay, repeat, 0, 0])
   }
 
@@ -561,7 +566,7 @@ class HomingHome extends WithRigidPlays {
     mass: 40000,
     air_friction: 0.99,
     max_speed: 200,
-    max_force: 100
+    max_force: 90
   }
   r_bs = [[b_wander_steer(10, 200, 100), 0.2],
     [b_arrive_steer(this.v_target), 0.8]
@@ -569,7 +574,9 @@ class HomingHome extends WithRigidPlays {
   r_wh = Vec2.make(30, 60)
 
 
-  _init() {}
+  _init() {
+    this.r_opts.max_force += rnd_int(100)
+  }
 
   _update(dt: number, dt0: number) {
 
@@ -834,6 +841,93 @@ class Area extends WithPlays {
 
 }
 
+class BPM extends WithPlays {
+
+  get beat_ms() {
+    return [this._sub, this._sub0]
+    //return [this._sub, this._t, this._t / this._ms_per_sub]
+  }
+
+  _init() {
+
+    let _bpm = this.data.bpm
+    let _ms_per_beat = 60000 / _bpm
+    let _subs = 4
+    let _ms_per_sub = _ms_per_beat / _subs
+
+    let _sub = 0
+
+    let _lookahead_ms = 20
+    let _t = _lookahead_ms
+    let m_t = () => _t - _lookahead_ms
+
+    this._t = _t
+    this._ms_per_sub = _ms_per_sub
+    this._lookahead_ms = _lookahead_ms
+    this._sub = _sub
+
+    this._sub0 = this._sub
+  }
+
+  _update(dt: number, dt0: number) {
+    let { _t, _ms_per_sub, _lookahead_ms } = this
+
+    this._sub0 = this._sub
+
+    if (_t + dt + _lookahead_ms > _ms_per_sub) {
+      this._t = _t - _ms_per_sub + dt
+      this._sub += 1
+    } else {
+      this._t += dt
+    }
+  }
+}
+
+class Audio extends WithPlays {
+
+  _init() {
+    this._ready = false
+    this._beat = false
+  }
+
+  _update(dt: number, dt0: number) {
+
+    if (!this._ready && this.m.just_lock) {
+      generate(() => this._ready = true)
+    }
+    if (this._ready && !this._beat && this.m.been_lock !== undefined) {
+      this._beat = psfx(0, true)
+      this.make(BPM, { bpm: 80 } )
+    }
+
+    if (this._beat && this.m.just_unlock) {
+      this._beat()
+      this._beat = undefined
+      this.plays.one(BPM)?.dispose()
+    }
+
+
+  }
+
+}
+
+class Spawn extends WithPlays {
+
+
+  _update(dt: number, dt0: number) {
+
+    if (this.plays.on_beat(8)) {
+
+      this.make(Cylinder, {
+        apply: () => ({
+          v_pos: arr_rnd(r_screen.vertices)
+        })
+      }, 0, -4)
+    }
+  }
+}
+
+
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
 
@@ -853,13 +947,24 @@ export default class AllPlays extends PlayMakes {
     this._shake = this._shake * 0.6 + radius
   }
 
+  get beat_ms() {
+    return this.one(BPM)?.beat_ms
+  }
+
+  on_beat(sub: number) {
+    return this.beat_ms !== undefined && on_interval(sub, ...this.beat_ms)
+  }
+
   _init() {
 
     this.camera = new Camera(this.g, w/1920)
 
     this.objects = []
 
+    this.make(Audio)
+
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
+    this.make(Spawn)
 
     //return
     /*
@@ -889,6 +994,7 @@ export default class AllPlays extends PlayMakes {
     })
     this.make(Area, { x: v_screen.half.x, y: v_screen.half.y, color: colors.gray, radius: 1000 }, ticks.seconds * 8, 0)
     
+    /*
     this.make(Cylinder, { apply: (i_repeat) => ({
       v_pos: arr_rnd(r_screen.vertices)
     })
@@ -908,12 +1014,6 @@ export default class AllPlays extends PlayMakes {
     })
     }, ticks.seconds * 1, 0)
 
-    /*
-    this.make(Explode, {
-      apply: (i_repeat) => ({
-        v_pos: rnd_vec().scale(((i_repeat % 10) + 3) * 100)
-      })
-    }, ticks.seconds, 10)
    */
   }
 
@@ -927,6 +1027,7 @@ export default class AllPlays extends PlayMakes {
     }
 
     this.camera.update(dt, dt0)
+
     this.objects.forEach(_ => _.update(dt, dt0))
   }
   _draw() {

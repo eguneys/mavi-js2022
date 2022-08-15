@@ -36,7 +36,7 @@ export default args => {
       babel({ extensions, babelHelpers: 'bundled' }),
       copy({
         targets: [
-          { src: 'assets/vsound.min.js', dest: 'dist' }
+        //  { src: 'assets/vsound.min.js', dest: 'dist' }
         ]
       }),
       rollupPluginSpglsl({ compileMode: 'Optimize', minify : true, mangleTwoPasses: true }),

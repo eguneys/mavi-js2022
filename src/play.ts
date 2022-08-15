@@ -432,6 +432,7 @@ class Cylinder extends WithRigidPlays {
   _init() {
     let { v_pos } = this.data
     this._cursor = this.plays.one(Cursor)
+    this.danger = 0
   }
 
   _update(dt: number, dt0: number) {
@@ -443,6 +444,14 @@ class Cylinder extends WithRigidPlays {
     this.v_group.length = 0
 
     this.plays.all(Cylinder).forEach(_ => this !== _ && circ_orig(this.circle.scale(8), _.vs) && this.v_group.push(_.vs))
+
+
+    if (this.vs.distance(this._cursor.pursue_target) < 100) {
+      this.danger += dt
+    }
+
+    this._cursor.danger += this.danger
+
   }
 
   _draw() {
@@ -484,10 +493,33 @@ class Cursor extends WithRigidPlays {
     let { v_pos } = this.data
     this.eight_four = 8
     this.b_counter = 0
+
+
+    let self = this
+    this.make(Letters, {
+      _text() {
+        return [13 - self.lift + '', 13 - self.lift < 5 ? colors.red : colors.white]
+      },
+      color: colors.red,
+      v_pos: Vec2.make(500, 100)
+    })
+
+    this.lift = 0
+    this.danger = 0
   }
 
   _update(dt: number, dt0: number) {
 
+    if (this.lift >= 13) {
+     this.plays.one(Audio).beat(1)
+    }
+
+    if (this.danger > 1000) {
+      this.plays.one(Audio).beat(1)
+    }
+
+    this.lift = 0
+    this.danger = 0
 
     let hold_shoot = this.m.been_on > 0
 
@@ -543,14 +575,14 @@ let letters = "abcdefghijklmnopqrstuvwxyz!0123456789,.".split('')
 class Letters extends WithPlays {
   _draw() {
 
-    let text = typeof this.data.text === 'string' ? this.data.text : this.data.text()
+    let [text, color] = this.data.text ? [this.data.text, colors.white] : this.data._text()
     let _letters = text.split('')
     let { v_pos, scale } = this.data;
     scale ||= 2
     _letters.forEach((letter, i) => {
       let sx = letters.indexOf(letter) * 8
       if (sx >= 0) {
-        this.camera.texture(colors.white, 0, v_pos.x + i * scale * 5*(1920/320), v_pos.y, scale*5, scale*7, sx, 9, 5, 7)
+        this.camera.texture(color, 0, v_pos.x + i * scale * 5*(1920/320), v_pos.y, scale*5, scale*7, sx, 9, 5, 7)
       }
     })
   }
@@ -664,6 +696,8 @@ class HomingLift extends WithRigidPlays {
 
   _update(dt: number, dt0: number) {
 
+    this._cursor.lift++
+
     let _v = this._cursor.pursue_target
     this.v_orbit.set_in(_v.x, _v.y)
 
@@ -693,10 +727,6 @@ class HomingLift extends WithRigidPlays {
     let { w, vs } = this
 
     this.camera.fr(color, this.angle, vs.x, vs.y, w, w)
-  }
-
-  _dispose() {
-    
   }
 }
 
@@ -940,6 +970,15 @@ class Audio extends WithPlays {
   _init() {
     this._ready = false
     this._beat = false
+    this._i_beat = 0
+  }
+
+  beat(n: number) {
+    if (this._i_beat !== n) {
+      this._beat()
+      this._beat = undefined
+      this._i_beat = n
+    }
   }
 
   _update(dt: number, dt0: number) {
@@ -948,7 +987,7 @@ class Audio extends WithPlays {
       generate(() => this._ready = true)
     }
     if (this._ready && !this._beat && this.m.been_lock !== undefined) {
-      this._beat = psfx(0, true)
+      this._beat = psfx(this._i_beat, true)
       this.make(BPM, { bpm: 80 } )
     }
 
@@ -1043,8 +1082,8 @@ export default class AllPlays extends PlayMakes {
     let self = this
     this.make(Letters, {
       scale: 3,
-      text() { return Math.floor(self.life / 1000) + '.' + Math.floor((self.life % 1000)/100) },
-      v_pos: Vec2.make(500, 100)
+      _text() { return [Math.floor(self.life / 1000) + '.' + Math.floor((self.life % 1000)/100), colors.white] },
+      v_pos: Vec2.make(800, 100)
     })
     this.make(Area, { x: v_screen.half.x, y: v_screen.half.y, color: colors.gray, radius: 1000 }, ticks.seconds * 8, 0)
     

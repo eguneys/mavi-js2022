@@ -450,6 +450,7 @@ class Cursor extends WithRigidPlays {
 
   _init() {
     let { v_pos } = this.data
+    this.eight_four = 8
   }
 
   _update(dt: number, dt0: number) {
@@ -459,7 +460,10 @@ class Cursor extends WithRigidPlays {
 
     this.v_target.set_in(this.m.pos.x, this.m.pos.y)
 
-    if (!hold_shoot && this.on_interval(ticks.half)) {
+    if (this.plays.on_beat(8)) {
+      this.eight_four = this.eight_four === 4 ? 8 : 4
+    }
+    if (!hold_shoot && this.plays.on_beat(4) && this.plays.on_beat(this.eight_four)) {
       let target = this.plays.one(Cylinder)
       if (target) {
         let a = target.vs.sub(this.vs).angle + Math.PI * 0.25

@@ -383,6 +383,10 @@ class CylinderInCircle extends WithRigidPlays {
   }
 
   _update(dt: number, dt0: number) {
+    if (!this._cursor) {
+      this.dispose()
+      return
+    }
     let { x, y } = this._cursor.pursue_target
     this.v_target.set_in(x, y)
 
@@ -431,7 +435,11 @@ class Cylinder extends WithRigidPlays {
 
   _init() {
     let { v_pos } = this.data
-    this._cursor = this.plays.one(Cursor)
+    // Hack dummy cursor
+    this._cursor = this.plays.one(Cursor) || {
+      pursue_target: v_screen.half,
+      circle: Circle.unit
+    }
     this.danger = 0
   }
 
@@ -493,16 +501,6 @@ class Cursor extends WithRigidPlays {
     let { v_pos } = this.data
     this.eight_four = 8
     this.b_counter = 0
-
-
-    let self = this
-    this.make(Letters, {
-      _text() {
-        return [13 - self.lift + '', 13 - self.lift < 5 ? colors.red : colors.white]
-      },
-      color: colors.red,
-      v_pos: Vec2.make(500, 100)
-    })
 
     this.lift = 0
     this.danger = 0
@@ -986,12 +984,21 @@ class Audio extends WithPlays {
     if (!this._ready && this.m.just_lock) {
       generate(() => this._ready = true)
     }
+    if (this.m.just_lock) {
+      let _ = this.plays.one(Dialog, this.plays.ui)
+      if (_) {
+        _._dd = true
+      }
+    }
     if (this._ready && !this._beat && this.m.been_lock !== undefined) {
+      this.plays.one(Spawn).playing = this._i_beat !== 1
+
       this._beat = psfx(this._i_beat, true)
       this.make(BPM, { bpm: 80 } )
     }
 
     if (this._beat && this.m.just_unlock) {
+      this.plays.one(Spawn).playing = false
       this._beat()
       this._beat = undefined
       this.plays.one(BPM)?.dispose()
@@ -1004,8 +1011,69 @@ class Audio extends WithPlays {
 
 class Spawn extends WithPlays {
 
+  _init() {
+    let score = {
+      life: 0,
+      high: 0
+    }
+
+
+
+    let self = this
+    this.make(Letters, {
+      _text() {
+        let lift = self.plays.one(Cursor)?.lift || 0
+        return [13 - lift + '', 13 - lift < 5 ? colors.red : colors.white]
+      },
+      color: colors.red,
+      v_pos: Vec2.make(500, 100)
+    })
+
+
+
+    this.playing = false
+    this.score = score
+
+    this.make(Letters, {
+      scale: 3,
+      _text() { return [Math.floor(score.life / 1000) + '.' + Math.floor((score.life % 1000)/100), score.life === score.high ? colors.yellow : colors.white] },
+      v_pos: Vec2.make(800, 100)
+    })
+
+
+    this.make(Letters, {
+      text: 'hi',
+      v_pos: Vec2.make(1450, 100)
+    })
+
+    this.make(Letters, {
+      scale: 2,
+      _text() { return ['' + Math.floor(score.high / 1000), colors.yellow] },
+      v_pos: Vec2.make(1600, 100)
+    })
+  }
 
   _update(dt: number, dt0: number) {
+
+    if (this.playing) {
+      this.score.life += dt
+    } else {
+      this.score.life = 0
+      this.life = 0
+    }
+
+    if (!this.playing) {
+      if (!this.plays.one(Dialog, this.plays.ui)) {
+        this.make(Dialog, { group: this.plays.ui })
+      }
+    }
+
+    this.score.high = Math.max(this.score.high, this.score.life)
+
+    if (!this.playing) {
+      return
+    }
+
     if (this.plays.on_beat(8)) {
       this.make(Cylinder, {
         apply: () => ({
@@ -1016,6 +1084,84 @@ class Spawn extends WithPlays {
   }
 }
 
+class Dialog extends WithPlays {
+
+  _init() {
+
+
+    this.plays.all(HomingLift).forEach(_ => _.dispose())
+    this.plays.one(Cursor)?.dispose()
+    this.plays.all(Cylinder).forEach(_ => _.dispose())
+    this.a = []
+
+    this.make(Letters, {
+      text: 'die in 13k',
+      v_pos: Vec2.make(680, 260),
+      group: this.a
+    })
+    this.make(Letters, {
+      text: 'bullets orbit around',
+      v_pos: Vec2.make(380, 360),
+      group: this.a
+    })
+    this.make(Letters, {
+      text: '13 bullets is death',
+      v_pos: Vec2.make(400, 460),
+      group: this.a
+    })
+    this.make(Letters, {
+      text: 'cylinders follow you',
+      v_pos: Vec2.make(380, 560),
+      group: this.a
+    })
+    this.make(Letters, {
+      text: 'cylinders is death',
+      v_pos: Vec2.make(420, 660),
+      group: this.a
+    })
+    this.make(Letters, {
+      text: 'mouse holds bullets',
+      v_pos: Vec2.make(400, 760),
+      group: this.a
+    })
+    this.make(Letters, {
+      text: 'release launchs attack',
+      v_pos: Vec2.make(350, 860),
+      group: this.a
+    })
+    this.make(Letters, {
+      text: 'mind the beat',
+      v_pos: Vec2.make(550, 960),
+      group: this.a
+    })
+
+  }
+
+  _update(dt: number, dt0: number) {
+    if (this.m.been_on) {
+      this._dd = true
+    }
+
+    if (this.on_interval(ticks.seconds)) {
+      if (this._dd) {
+        this.dispose()
+      }
+    }
+
+    this.a.forEach(_ => _.update(dt, dt0))
+  }
+
+  _draw() {
+    this.camera.fr(colors.white, 0, ...v_screen.half.add(Vec2.make(0, 80)).vs, 1400, 900)
+
+    this.a.forEach(_ => _.draw())
+  }
+
+  _dispose() {
+    this.plays.one(Audio).beat(0)
+    this.make(Cursor, { v_pos: Vec2.make(100, 0) })
+  }
+}
 
 //red xy .6 white xy .3 black xy
 //white xy .5 red xy .4 black xy
@@ -1026,8 +1172,8 @@ export default class AllPlays extends PlayMakes {
     return this.objects.filter(_ => _ instanceof Ctor)
   }
 
-  one(Ctor: any) {
-    return this.objects.findLast(_ => _ instanceof Ctor)
+  one(Ctor: any, o = this.objects) {
+    return o.findLast(_ => _ instanceof Ctor)
   }
 
   _shake = 0
@@ -1053,10 +1199,10 @@ export default class AllPlays extends PlayMakes {
     this.camera = new Camera(this.g, w/1920)
 
     this.objects = []
+    this.ui = []
 
     this.make(Audio)
 
-    this.make(Cursor, { v_pos: Vec2.make(100, 0) })
     this.make(Spawn)
 
     //return
@@ -1079,12 +1225,6 @@ export default class AllPlays extends PlayMakes {
       v_pos: Vec2.make(100, 100)
     })
 
-    let self = this
-    this.make(Letters, {
-      scale: 3,
-      _text() { return [Math.floor(self.life / 1000) + '.' + Math.floor((self.life % 1000)/100), colors.white] },
-      v_pos: Vec2.make(800, 100)
-    })
     this.make(Area, { x: v_screen.half.x, y: v_screen.half.y, color: colors.gray, radius: 1000 }, ticks.seconds * 8, 0)
     
     /*
@@ -1122,8 +1262,10 @@ export default class AllPlays extends PlayMakes {
     this.camera.update(dt, dt0)
 
     this.objects.forEach(_ => _.update(dt, dt0))
+    this.ui.forEach(_ => _.update(dt, dt0))
   }
   _draw() {
     this.objects.forEach(_ => _.draw())
+    this.ui.forEach(_ => _.draw())
   }
 }

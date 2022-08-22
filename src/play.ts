@@ -1142,7 +1142,7 @@ class Dialog extends WithPlays {
       this._dd = true
     }
 
-    if (this.on_interval(ticks.seconds)) {
+    if (this.life > ticks.seconds * 2) {
       if (this._dd) {
         this.dispose()
       }
@@ -1160,6 +1160,15 @@ class Dialog extends WithPlays {
   _dispose() {
     this.plays.one(Audio).beat(0)
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
+  }
+}
+
+class Background extends WithPlays {
+
+  _draw() {
+    if (this.plays.on_beat_lee(8, [0, 1])) {
+    this.camera.fc(colors.flash, v_screen.half.x, v_screen.half.y, 1920 * 2)
+    }
   }
 }
 
@@ -1202,6 +1211,7 @@ export default class AllPlays extends PlayMakes {
     this.ui = []
 
     this.make(Audio)
+    this.make(Background)
 
     this.make(Spawn)
 

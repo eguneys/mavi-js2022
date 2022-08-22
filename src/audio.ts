@@ -25,15 +25,17 @@ function initAudio(sndData, cb){
   sndData.forEach(function(o, i){
     var sndGenerator = new MusicPlayer();
     sndGenerator.init(o);
-    var done = false;
     function step() {
-      done = sndGenerator.generate() == 1;
-      soundsReady+=done;
+      let done = sndGenerator.generate() == 1;
       if(done){
+
         let wave = sndGenerator.createWave().buffer;
         audioCtx.decodeAudioData(wave, function(buffer) {
           sounds[i] = buffer;
-          cb(sounds)
+          soundsReady++
+          if (soundsReady === totalSounds) {
+            cb(sounds)
+          }
         })
         return
       }

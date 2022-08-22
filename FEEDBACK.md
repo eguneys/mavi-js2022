@@ -1,3 +1,21 @@
+# Iteration 2
+
+- white rotation area has no use
+- waves get harder up to a certain point than it gets easier again
+- there is no end game
+- one more thing to add with a different behaviour
+
+
+## Translation
+
+- beyaz donen alanin bir amaci yok.
+- dalgalar giderek zorlasiyor ama sonra tekrar kolaya donuyor.
+- oyun sonu yok.
+- farkli bir davranisa sahip eklenebilecek bir sey.
+
+
+# Iteration 1
+
 - what is a good composition of these elements into a game
 - die counter
 - big rotating white rectangle area
@@ -8,7 +26,6 @@
 - homing yellow bullets that seek cylinders and destroy
 - rhytmic music, that spawn of elements can be synced to the beat
 - one thing to add
-
 
 
 ## Translation

@@ -17,8 +17,8 @@ function loop(fn: (dt: number, dt0: number) => void) {
   let animation_frame_id
   let fixed_dt = 1000/60
   let timestamp0: number | undefined,
-  min_dt = fixed_dt,
-    max_dt = fixed_dt * 2,
+  min_dt = fixed_dt * 0.9,
+    max_dt = fixed_dt * 1.1,
     dt0 = fixed_dt
 
   let elapsed = 0

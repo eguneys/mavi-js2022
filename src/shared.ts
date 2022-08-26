@@ -20,5 +20,5 @@ export const colors = {
   darkred: 0xcc0000,
   yellow: 0xffff00,
   gray: 0xcccccc,
-  flash: 0x111111,
+  flash: 0xdddddd,
 }

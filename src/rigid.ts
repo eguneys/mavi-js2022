@@ -1,26 +1,28 @@
 /* http://www.red3d.com/cwr/steer/gdc99/ */
 import { Circle, Vec2, Matrix } from './vec2'
 
-export type Rigid = {
+export type RigidOptions = {
   mass: number,
   air_friction: number,
   max_speed: number,
   max_force: number,
+  x0: number
+}
+
+export type Rigid = {
+  opts: RigidOptions,
   force: number,
   x: number,
   x0: number,
   vx: number
 }
 
-export function make_rigid(x, mass, air_friction, max_speed, max_force) {
+export function make_rigid(x0: number, opts: RigidOptions) {
   return {
-    max_force,
-    max_speed,
-    air_friction,
-    mass,
+    opts,
     force: 0,
-    x,
-    x0: x,
+    x: x0,
+    x0,
     vx: 0
   }
 }
@@ -36,9 +38,9 @@ export function truncate(a: number, max: number) {
 /* https://stackoverflow.com/questions/32709599/the-time-corrected-verlet-numerical-integration-formula */
 export function rigid_update(body: Rigid, dt: number, dt0: number) {
 
-  let { air_friction, force, mass, max_speed, max_force } = body
+  let { opts: { air_friction, mass, max_speed, max_force } } = body
 
-  let { x, x0 } = body
+  let { force, x, x0 } = body
 
   let a = force / mass
 
@@ -53,13 +55,6 @@ export function rigid_update(body: Rigid, dt: number, dt0: number) {
   body.x0 = new_x0
   body.x = new_x
   body.vx = new_vx
-}
-
-export type RigidOptions = {
-  mass: number,
-  air_friction: number,
-  max_speed: number,
-  max_force: number
 }
 
 
@@ -90,8 +85,8 @@ export function matrix_translate(matrix: Matrix) {
 
 
 export function rigid_body(vs: Vec2, opts: RigidOptions) {
-  let r_x = make_rigid(vs.x, opts.mass, opts.air_friction, opts.max_speed, opts.max_force)
-  let r_y = make_rigid(vs.y, opts.mass, opts.air_friction, opts.max_speed, opts.max_force)
+  let r_x = make_rigid(vs.x, opts)
+  let r_y = make_rigid(vs.y, opts)
 
   function update(dt, dt0) {
     rigid_update(r_x, dt, dt0)

@@ -373,7 +373,15 @@ class CylinderInCircle extends WithRigidPlays {
 
   _init() {
 
+
     let { vs } = this
+
+    this.make(Letters, {
+      text: 'run',
+      v_pos: vs,
+      life: ticks.half,
+      scale: 1
+    })
     this._cursor = this.plays.one(Cursor)
     this.make(Explode, { apply: () => ({
       v_pos: vs
@@ -573,6 +581,17 @@ class Cursor extends WithRigidPlays {
 let letters = "abcdefghijklmnopqrstuvwxyz!0123456789,.".split('')
 
 class Letters extends WithPlays {
+
+
+  _update(dt: number, dt0: number) {
+    if (this.data.life) {
+      if (this.life > this.data.life) {
+        this.dispose()
+      }
+      this.data.v_pos.y -= dt * 0.1
+    }
+  }
+
   _draw() {
 
     let [text, color] = this.data.text ? [this.data.text, colors.white] : this.data._text()
@@ -668,7 +687,15 @@ class HomingHome extends WithRigidPlays {
   _dispose() {
     this.data.target.dispose()
     this.make(Explode, {
-      v_pos: this.vs
+      v_pos: this.vs,
+      color: colors.yellow
+    })
+
+    this.make(Letters, {
+      text: 'hit',
+      v_pos: this.vs,
+      scale: 1,
+      life: ticks.seconds
     })
   }
 }
@@ -849,6 +876,8 @@ class HollowCircle extends WithRigidPlays {
 
   _init() {
     this._rt = quick_burst(2, 1.2, 0.2)
+
+
   }
 
   _update(dt: number, dt0: number) {
@@ -880,6 +909,16 @@ class HollowCircle extends WithRigidPlays {
     this.g.queue('black', 0, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
    */
   }
+
+
+  _dispose() {
+    this.make(Letters, {
+      text: 'x' + Math.floor(this.radius/100),
+      v_pos: this.vs,
+      scale: 1,
+      life: ticks.sixth
+    })
+  }
 }
 
 class Explode extends WithPlays {
@@ -889,9 +928,7 @@ class Explode extends WithPlays {
 
     let { v_pos } = this.data
 
-    //let { destroy } = this.data
-
-    //destroy?.dispose()
+    let color = this.data.color || colors.red
 
     this.shake(10)
 
@@ -908,7 +945,7 @@ class Explode extends WithPlays {
       x: 0,
       y: 0,
       radius: 90,
-      color: colors.red
+      color
     }, ticks.sixth)
 
 
@@ -925,7 +962,7 @@ class Explode extends WithPlays {
       x: v.x,
       y: v.y,
       radius: 30,
-      color: colors.red
+      color
     }, ticks.sixth * 1.8))
 
     this.make(VanishDot, {
@@ -934,7 +971,7 @@ class Explode extends WithPlays {
         x: rnd_int_h(6),
         y: rnd_int_h(10),
         radius: 6 + rnd_int(15),
-        color: colors.red
+        color
       })
     }, ticks.sixth, -10)
 

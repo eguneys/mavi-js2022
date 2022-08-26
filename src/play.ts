@@ -377,7 +377,7 @@ class CylinderInCircle extends WithRigidPlays {
     let { vs } = this
 
     this.make(Letters, {
-      text: 'run',
+      _text() { return ['run', colors.gray] },
       v_pos: vs,
       life: ticks.half,
       scale: 1
@@ -692,10 +692,10 @@ class HomingHome extends WithRigidPlays {
     })
 
     this.make(Letters, {
-      text: 'hit',
+      _text() { return ['hit', colors.yellow] },
       v_pos: this.vs,
       scale: 1,
-      life: ticks.seconds
+      life: ticks.seconds,
     })
   }
 }
@@ -913,7 +913,7 @@ class HollowCircle extends WithRigidPlays {
 
   _dispose() {
     this.make(Letters, {
-      text: 'x' + Math.floor(this.radius/100),
+      text: 'x' + Math.floor(this.radius/20),
       v_pos: this.vs,
       scale: 1,
       life: ticks.sixth

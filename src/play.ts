@@ -132,6 +132,9 @@ console.log(on_interval_lee(4, 6, 5) === false)
 console.log(on_interval_lee(4, 10, 9) === false)
 */
 
+
+
+
 abstract class Play {
 
   get g() { return this.ctx.g }
@@ -344,7 +347,7 @@ abstract class WithRigidPlays extends WithPlays {
     this.r_wh = wh || (radius && Vec2.make(radius, radius)) || this.r_wh
     this._bh = steer_behaviours(this.v_target, this.r_opts, this.r_bs)
 
-    super.init()
+    return super.init()
   }
 
 
@@ -382,7 +385,7 @@ class CylinderInCircle extends WithRigidPlays {
       life: ticks.half,
       scale: 1
     })
-    this._cursor = this.plays.one(Cursor)
+    this._cursor = this.plays.one(Cursor) || this.plays.dummy_cursor
     this.make(Explode, { apply: () => ({
       v_pos: vs
     }) }, ticks.seconds)
@@ -443,10 +446,7 @@ class Cylinder extends WithRigidPlays {
   _init() {
     let { v_pos } = this.data
     // Hack dummy cursor
-    this._cursor = this.plays.one(Cursor) || {
-      pursue_target: v_screen.half,
-      circle: Circle.unit
-    }
+    this._cursor = this.plays.one(Cursor) || this.plays.dummy_cursor
     this.danger = 0
   }
 
@@ -716,7 +716,7 @@ class HomingLift extends WithRigidPlays {
 
   _init() {
 
-    this._cursor = this.plays.one(Cursor)
+    this._cursor = this.plays.one(Cursor) || this.plays.dummy_cursor
     this.r_bs.unshift([b_orbit_steer(this.v_orbit), 0.8])
   }
 
@@ -831,7 +831,7 @@ class VanishCircle extends WithPlays {
 class GhostCircle extends WithPlays {
 
   _init() {
-    this._cursor = this.plays.one(Cursor)
+    this._cursor = this.plays.one(Cursor) || this.plays.dummy_cursor
   }
 
   get radius() {
@@ -1309,6 +1309,8 @@ export default class AllPlays extends PlayMakes {
   }
 
   _init() {
+
+    this.dummy_cursor = new Cursor(this)._set_data({ group: [], v_pos: Vec2.zero }).init()
 
     this.camera = new Camera(this.g, w/1920)
 

@@ -16,7 +16,6 @@ import Camera from './camera'
 
 import { arr_shuffle } from './util'
 
-
 const quick_burst = (radius: number, start: number = 0.8, end: number = 0.2) => 
 tween([start, start, 1, end].map(_ => _ * radius), [ticks.five + ticks.three, ticks.three * 2, ticks.three * 2])
 
@@ -374,7 +373,15 @@ class CylinderInCircle extends WithRigidPlays {
 
   _init() {
 
+
     let { vs } = this
+
+    this.make(Letters, {
+      _text() { return ['run', colors.gray] },
+      v_pos: vs,
+      life: ticks.half,
+      scale: 1
+    })
     this._cursor = this.plays.one(Cursor)
     this.make(Explode, { apply: () => ({
       v_pos: vs
@@ -541,12 +548,15 @@ class Cursor extends WithRigidPlays {
 
     if (this.m.just_off) {
       if (!this.plays.one(HollowCircle) && this.plays.on_beat_lee(8, [0, 1])) {
-        this.b_counter = 2
-        this.make(HollowCircle, {
-          v_pos: this.vs,
-          radius: 400,
-          color: colors.yellow
-        })
+        let { radius } = this.plays.one(GhostCircle)
+        if (radius) {
+          this.b_counter = 2
+          this.make(HollowCircle, {
+            v_pos: this.vs,
+            radius,
+            color: colors.yellow
+          })
+        }
       }
     }
 
@@ -571,6 +581,17 @@ class Cursor extends WithRigidPlays {
 let letters = "abcdefghijklmnopqrstuvwxyz!0123456789,.".split('')
 
 class Letters extends WithPlays {
+
+
+  _update(dt: number, dt0: number) {
+    if (this.data.life) {
+      if (this.life > this.data.life) {
+        this.dispose()
+      }
+      this.data.v_pos.y -= dt * 0.1
+    }
+  }
+
   _draw() {
 
     let [text, color] = this.data.text ? [this.data.text, colors.white] : this.data._text()
@@ -666,7 +687,15 @@ class HomingHome extends WithRigidPlays {
   _dispose() {
     this.data.target.dispose()
     this.make(Explode, {
-      v_pos: this.vs
+      v_pos: this.vs,
+      color: colors.yellow
+    })
+
+    this.make(Letters, {
+      _text() { return ['hit', colors.yellow] },
+      v_pos: this.vs,
+      scale: 1,
+      life: ticks.seconds,
     })
   }
 }
@@ -695,6 +724,11 @@ class HomingLift extends WithRigidPlays {
   _update(dt: number, dt0: number) {
 
     this._cursor.lift++
+    
+      if (this.on_interval(ticks.seconds)) {
+      this.r_opts.max_speed -= 3
+      this.r_opts.mass += 10
+    }
 
     let _v = this._cursor.pursue_target
     this.v_orbit.set_in(_v.x, _v.y)
@@ -702,7 +736,8 @@ class HomingLift extends WithRigidPlays {
     if (this.on_interval(ticks.sixth)) {
 
     let { v_pos, x, y, i } = this.data
-    let target = this.plays.all(Cylinder).find(_ => !_.flag)
+    let target = this.plays.all(Cylinder).filter(_ => !_.flag)
+    .find(_ => this.vs.distance(_.vs) < 500)
 
     if (target) {
       this.target = target
@@ -724,6 +759,9 @@ class HomingLift extends WithRigidPlays {
 
     let { w, vs } = this
 
+    if (this._cursor.lift > 0) {
+      color = this.between_interval(ticks.sixth) ? colors.red : colors.gray
+    }
     this.camera.fr(color, this.angle, vs.x, vs.y, w, w)
   }
 }
@@ -790,11 +828,56 @@ class VanishCircle extends WithPlays {
   }
 }
 
+class GhostCircle extends WithPlays {
+
+  _init() {
+    this._cursor = this.plays.one(Cursor)
+  }
+
+  get radius() {
+    if (this._rt) {
+      let [radius] = read(this._rt)
+      return radius / 2
+    }
+  }
+
+
+  _update(dt: number, dt0: number) {
+
+    if (this._rt) {
+      update(this._rt, dt, dt0)
+    }
+    if (this.plays.on_beat_lee(8, [0, 1])) {
+      if (this.plays.on_beat(1)) {
+        // 0 1 2
+        // 1 2 1
+        let r = (this.plays.beat_ms[0] + 1) % 8
+        r = r === 1 ? 2 : 1
+        this._rt = tween([0, 0.5, 1, 1.2, 1.5, 1].map(_ => (r * 300) + _ * 200), [ticks.three])
+      }
+    } else {
+      this._rt = undefined
+    }
+  }
+
+  _draw() {
+    let { x, y } = this._cursor.pursue_target
+    if (!this._rt) {
+      return
+    }
+    let [radius] = read(this._rt)
+
+    this.camera.fc(colors.gray, x, y, radius * 0.9, 0.01)
+    this.camera.fc(colors.gray, x, y, radius, 0.01)
+  }
+}
 
 class HollowCircle extends WithRigidPlays {
 
   _init() {
     this._rt = quick_burst(2, 1.2, 0.2)
+
+
   }
 
   _update(dt: number, dt0: number) {
@@ -826,6 +909,16 @@ class HollowCircle extends WithRigidPlays {
     this.g.queue('black', 0, this.g._hc, 0, x, y, radius, radius, radius, radius - 1)
    */
   }
+
+
+  _dispose() {
+    this.make(Letters, {
+      text: 'x' + Math.floor(this.radius/20),
+      v_pos: this.vs,
+      scale: 1,
+      life: ticks.sixth
+    })
+  }
 }
 
 class Explode extends WithPlays {
@@ -835,9 +928,7 @@ class Explode extends WithPlays {
 
     let { v_pos } = this.data
 
-    //let { destroy } = this.data
-
-    //destroy?.dispose()
+    let color = this.data.color || colors.red
 
     this.shake(10)
 
@@ -854,7 +945,7 @@ class Explode extends WithPlays {
       x: 0,
       y: 0,
       radius: 90,
-      color: colors.red
+      color
     }, ticks.sixth)
 
 
@@ -871,7 +962,7 @@ class Explode extends WithPlays {
       x: v.x,
       y: v.y,
       radius: 30,
-      color: colors.red
+      color
     }, ticks.sixth * 1.8))
 
     this.make(VanishDot, {
@@ -880,7 +971,7 @@ class Explode extends WithPlays {
         x: rnd_int_h(6),
         y: rnd_int_h(10),
         radius: 6 + rnd_int(15),
-        color: colors.red
+        color
       })
     }, ticks.sixth, -10)
 
@@ -935,7 +1026,7 @@ class BPM extends WithPlays {
     let _subs = 4
     let _ms_per_sub = _ms_per_beat / _subs
 
-    let _sub = 0
+    let _sub = -1
 
     let _lookahead_ms = 20
     let _t = _lookahead_ms
@@ -991,6 +1082,7 @@ class Audio extends WithPlays {
       }
     }
     if (this._ready && !this._beat && this.m.been_lock !== undefined) {
+      console.log('ibeat', this._i_beat)
       this.plays.one(Spawn).playing = this._i_beat !== 1
 
       this._beat = psfx(this._i_beat, true)
@@ -1023,7 +1115,7 @@ class Spawn extends WithPlays {
     this.make(Letters, {
       _text() {
         let lift = self.plays.one(Cursor)?.lift || 0
-        return [13 - lift + '', 13 - lift < 5 ? colors.red : colors.white]
+        return [lift + '', lift > 8 ? colors.red : colors.white]
       },
       color: colors.red,
       v_pos: Vec2.make(500, 100)
@@ -1092,6 +1184,7 @@ class Dialog extends WithPlays {
     this.plays.all(HomingLift).forEach(_ => _.dispose())
     this.plays.one(Cursor)?.dispose()
     this.plays.all(Cylinder).forEach(_ => _.dispose())
+    this.plays.one(GhostCircle)?.dispose()
     this.a = []
 
     this.make(Letters, {
@@ -1160,6 +1253,8 @@ class Dialog extends WithPlays {
   _dispose() {
     this.plays.one(Audio).beat(0)
     this.make(Cursor, { v_pos: Vec2.make(100, 0) })
+
+    this.make(GhostCircle)
   }
 }
 
@@ -1167,7 +1262,17 @@ class Background extends WithPlays {
 
   _draw() {
     if (this.plays.on_beat_lee(8, [0, 1])) {
-    this.camera.fc(colors.flash, v_screen.half.x, v_screen.half.y, 1920 * 2)
+      let { x, y } = v_screen.half
+      let r = (this.plays.beat_ms[0] + 1) % 8
+      let s = r === 1 ? 2 : 1
+      let i = Math.sin(this.life * 0.002 + r * 0.1)
+      let c = Math.cos(this.life * 0.002 + s * 0.1)
+
+
+      this.camera.fc(colors.flash, x + i * x, y + c * y, 180 * r * c)
+      this.camera.fc(colors.flash, x + i * i * x * 0.5, y + c * c * y, 180 * s * r * c)
+      this.camera.fc(colors.flash, x + i * c * i * x, y + i * c * y * c, 180 * r * s * s * c)
+      this.camera.fc(colors.flash, x + c * c * c * i * x, y + i * c * y * c, 180 * r * s * r * i)
     }
   }
 }

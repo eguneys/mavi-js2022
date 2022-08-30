@@ -448,6 +448,13 @@ class Cylinder extends WithRigidPlays {
     // Hack dummy cursor
     this._cursor = this.plays.one(Cursor) || this.plays.dummy_cursor
     this.danger = 0
+
+    if (this.data.color) {
+      this.r_opts.mass = 600
+      this.r_opts.air_friction = 0.92
+    }
+
+    this.color = this.data.color || colors.darkred
   }
 
   _update(dt: number, dt0: number) {
@@ -470,8 +477,8 @@ class Cylinder extends WithRigidPlays {
   }
 
   _draw() {
-    let { vs, side } = this
-    this.camera.fr(colors.darkred, side.angle, vs.x, vs.y, 40, 80)
+    let { color, vs, side } = this
+    this.camera.fr(color, side.angle, vs.x, vs.y, 40, 80)
   }
 
 
@@ -536,6 +543,17 @@ class Cursor extends WithRigidPlays {
     if (this.plays.on_beat(8)) {
       this.eight_four = this.eight_four === 4 ? 8 : 4
     }
+
+    if (hold_shoot && this.plays.on_beat(8)) {
+      this.make(HomingLift, {
+        apply: (i) => ({
+          i,
+          v_pos: this.vs,
+          color: colors.white,
+        })
+      }, 0, 8)
+    }
+
     if (!hold_shoot && this.plays.on_beat(4) && this.plays.on_beat(this.eight_four)) {
       this.make(HomingLift, {
         apply: (i) => ({
@@ -992,6 +1010,14 @@ class Area extends WithPlays {
   _update(dt: number, dt0: number) {
     update(this._rt, dt, dt0)
 
+    if (this.plays.on_beat(3)) {
+
+      this.make(Cylinder, {
+        v_pos: v_screen.half,
+        color: colors.white
+      }, 1)
+    }
+
     if (completed(this._rt)) {
       this.dispose()
     }
@@ -1208,12 +1234,12 @@ class Dialog extends WithPlays {
       group: this.a
     })
     this.make(Letters, {
-      text: 'cylinders is death',
+      text: 'hold left will',
       v_pos: Vec2.make(420, 660),
       group: this.a
     })
     this.make(Letters, {
-      text: 'mouse holds bullets',
+      text: 'hold bullets and launch',
       v_pos: Vec2.make(400, 760),
       group: this.a
     })
